@@ -37,6 +37,7 @@
 from flask import Flask, render_template, redirect, url_for, request, session
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3 
 
 app = Flask(__name__)
 app.secret_key = 'clave-secreta-muy-segura'
@@ -45,22 +46,56 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # redirige si no autenticado
 
-# Simulación de base de datos
-users_db = {
-    'admin': {'password': generate_password_hash('admin123'), 'id': '1'}
-}
+def get_db_connection():
+    conn = sqlite3.connect('usuarios.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def crear_tabla():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+
+    # Crear usuario admin por defecto
+    admin = conn.execute(
+        'SELECT * FROM usuarios WHERE username = ?',
+        ('admin',)
+    ).fetchone()
+
+    if not admin:
+        conn.execute(
+            'INSERT INTO usuarios (username, password) VALUES (?, ?)',
+            ('admin', generate_password_hash('admin123'))
+        )
+        conn.commit()
+
+    conn.close()
 
 class User(UserMixin):
     def __init__(self, id, username):
         self.id = id
         self.username = username
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    for username, data in users_db.items():
-        if data['id'] == user_id:
-            return User(user_id, username)
+    conn = get_db_connection()
+    user_data = conn.execute(
+        'SELECT * FROM usuarios WHERE id = ?',
+        (user_id,)
+    ).fetchone()
+    conn.close()
+
+    if user_data:
+        return User(user_data['id'], user_data['username'])
     return None
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -69,9 +104,15 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        user_data = users_db.get(username)
+        conn = get_db_connection()
+        user_data = conn.execute(
+            'SELECT * FROM usuarios WHERE username = ?',
+            (username,)
+        ).fetchone()
+        conn.close()
+
         if user_data and check_password_hash(user_data['password'], password):
-            user = User(user_data['id'], username)
+            user = User(user_data['id'], user_data['username'])
             login_user(user)
             return redirect(url_for('dashboard'))
 
@@ -85,11 +126,43 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = get_db_connection()
+
+        # Verificar si el usuario ya existe
+        usuario_existente = conn.execute(
+            'SELECT * FROM usuarios WHERE username = ?',
+            (username,)
+        ).fetchone()
+
+        if usuario_existente:
+            conn.close()
+            return 'El usuario ya existe'
+
+        # Guardar nuevo usuario
+        password_hash = generate_password_hash(password)
+        conn.execute(
+            'INSERT INTO usuarios (username, password) VALUES (?, ?)',
+            (username, password_hash)
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('login'))
+
+    return render_template('registro.html')
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return 'Bienvenido al dashboard'
 
 if __name__ == '__main__':
+    crear_tabla()
     app.run(debug=True)
     
