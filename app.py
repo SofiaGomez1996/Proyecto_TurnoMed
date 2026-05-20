@@ -33,136 +33,180 @@
 
 
 
-
-from flask import Flask, render_template, redirect, url_for, request, session
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3 
-
 app = Flask(__name__)
-app.secret_key = 'clave-secreta-muy-segura'
+app.secret_key = "clave-secreta-turnomed"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # redirige si no autenticado
+login_manager.login_view = "login"
 
-def get_db_connection():
-    conn = sqlite3.connect('usuarios.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+inicializar_base_de_datos()
 
-def crear_tabla():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
 
-    # Crear usuario admin por defecto
-    admin = conn.execute(
-        'SELECT * FROM usuarios WHERE username = ?',
-        ('admin',)
-    ).fetchone()
-
-    if not admin:
-        conn.execute(
-            'INSERT INTO usuarios (username, password) VALUES (?, ?)',
-            ('admin', generate_password_hash('admin123'))
-        )
-        conn.commit()
-
-    conn.close()
 
 class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
+    def __init__(self, usuario):
+        self.id = str(usuario["id_usuario"])
+        self.nombre = usuario["nombre"]
+        self.apellido = usuario["apellido"]
+        self.email = usuario["email"]
+        self.rol = usuario["rol"]
+
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = get_db_connection()
-    user_data = conn.execute(
-        'SELECT * FROM usuarios WHERE id = ?',
-        (user_id,)
-    ).fetchone()
-    conn.close()
 
-    if user_data:
-        return User(user_data['id'], user_data['username'])
-    return None
-
-
-
-@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-        conn = get_db_connection()
-        user_data = conn.execute(
-            'SELECT * FROM usuarios WHERE username = ?',
-            (username,)
-        ).fetchone()
-        conn.close()
+        usuario = buscar_usuario_por_email(email)
 
-        if user_data and check_password_hash(user_data['password'], password):
-            user = User(user_data['id'], user_data['username'])
+
             login_user(user)
-            return redirect(url_for('dashboard'))
 
-        return 'Credenciales inválidas', 401
+            if user.rol == "admin":
+                return redirect(url_for("admin"))
+            elif user.rol == "paciente":
+                return redirect(url_for("paciente"))
+            elif user.rol == "medico":
+                return redirect(url_for("medico"))
 
-    return render_template('login.html')
+        flash("Correo o contraseña incorrectos.")
+        return redirect(url_for("login"))
 
-@app.route('/logout')
+    return render_template("login.html")
+
+
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        dni = request.form["dni"]
+        telefono = request.form["telefono"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        try:
+            registrar_paciente(nombre, apellido, dni, telefono, email, password)
+            flash("Registro exitoso. Ya podés iniciar sesión.")
+            return redirect(url_for("login"))
+        except Exception:
+            flash("No se pudo registrar. El correo ya puede estar registrado.")
+            return redirect(url_for("registro"))
+
+    return render_template("registro.html")
+
+
+@app.route("/admin")
+@login_required
+def admin():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    pacientes = obtener_pacientes()
+    horarios = obtener_horarios_disponibles()
+    turnos = obtener_turnos()
+
+    return render_template(
+        "admin.html",
+        pacientes=pacientes,
+        horarios=horarios,
+        turnos=turnos,
+        usuario=current_user
+    )
+
+
+@app.route("/cargar_horario", methods=["POST"])
+@login_required
+def cargar_horario_route():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    medico = request.form["medico"]
+    especialidad = request.form["especialidad"]
+    fecha = request.form["fecha"]
+    hora = request.form["hora"]
+
+    cargar_horario(medico, especialidad, fecha, hora)
+    flash("Horario cargado correctamente.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/asignar_turno", methods=["POST"])
+@login_required
+def asignar_turno_route():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    id_usuario = request.form["id_usuario"]
+    id_horario = request.form["id_horario"]
+
+    resultado = asignar_turno(id_usuario, id_horario)
+
+    if resultado:
+        flash("Turno asignado correctamente.")
+    else:
+        flash("El horario ya no está disponible.")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/cancelar_turno/<int:id_turno>")
+@login_required
+def cancelar_turno_route(id_turno):
+    if current_user.rol not in ["admin", "paciente"]:
+        return redirect(url_for("login"))
+
+    cancelar_turno(id_turno)
+
+    if current_user.rol == "admin":
+        return redirect(url_for("admin"))
+
+    return redirect(url_for("paciente"))
+
+
+@app.route("/paciente")
+@login_required
+def paciente():
+    if current_user.rol != "paciente":
+        return redirect(url_for("login"))
+
+    turnos = obtener_turnos_por_paciente(current_user.id)
+
+    return render_template(
+        "paciente.html",
+        usuario=current_user,
+        turnos=turnos
+    )
+
+
+@app.route("/medico")
+@login_required
+def medico():
+    if current_user.rol != "medico":
+        return redirect(url_for("login"))
+
+    nombre_medico = obtener_medico_actual()
+    turnos = obtener_turnos_por_medico(nombre_medico)
+
+    return render_template(
+        "medico.html",
+        usuario=current_user,
+        turnos=turnos,
+        medico=nombre_medico
+    )
+
+
+@app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        conn = get_db_connection()
-
-        # Verificar si el usuario ya existe
-        usuario_existente = conn.execute(
-            'SELECT * FROM usuarios WHERE username = ?',
-            (username,)
-        ).fetchone()
-
-        if usuario_existente:
-            conn.close()
-            return 'El usuario ya existe'
-
-        # Guardar nuevo usuario
-        password_hash = generate_password_hash(password)
-        conn.execute(
-            'INSERT INTO usuarios (username, password) VALUES (?, ?)',
-            (username, password_hash)
-        )
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('login'))
-
-    return render_template('registro.html')
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    return 'Bienvenido al dashboard'
-
-if __name__ == '__main__':
-    crear_tabla()
+    return redirect(url_for("login"))
+  
+if __name__ == "__main__":
     app.run(debug=True)
-    
+
