@@ -31,25 +31,7 @@
 #decorador @login_manager.user_loader ----> este es el puente entre la sesion y tu base de datos.
 #Flask_login lo llama automaticamente en cada peticion para reconstruir el objeto User a partir del id guardado en l cookie
 
-from flask import Flask, render_template, redirect, url_for, request, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.security import check_password_hash
 
-from Back import (
-    inicializar_base_de_datos,
-    buscar_usuario_por_email,
-    buscar_usuario_por_id,
-    registrar_paciente,
-    obtener_pacientes,
-    cargar_horario,
-    obtener_horarios_disponibles,
-    asignar_turno,
-    obtener_turnos,
-    obtener_turnos_por_paciente,
-    obtener_turnos_por_medico,
-    cancelar_turno,
-    obtener_medico_actual
-)
 
 app = Flask(__name__)
 app.secret_key = "clave-secreta-turnomed"
@@ -61,6 +43,7 @@ login_manager.login_view = "login"
 inicializar_base_de_datos()
 
 
+
 class User(UserMixin):
     def __init__(self, usuario):
         self.id = str(usuario["id_usuario"])
@@ -70,20 +53,10 @@ class User(UserMixin):
         self.rol = usuario["rol"]
 
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    usuario = buscar_usuario_por_id(user_id)
-    if usuario:
-        return User(usuario)
-    return None
 
-
-@app.route("/")
-def inicio():
-    return redirect(url_for("login"))
-
-
-@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form["email"]
@@ -91,8 +64,7 @@ def login():
 
         usuario = buscar_usuario_por_email(email)
 
-        if usuario and check_password_hash(usuario["password"], password):
-            user = User(usuario)
+
             login_user(user)
 
             if user.rol == "admin":
@@ -234,7 +206,7 @@ def medico():
 def logout():
     logout_user()
     return redirect(url_for("login"))
-
-
+  
 if __name__ == "__main__":
     app.run(debug=True)
+
