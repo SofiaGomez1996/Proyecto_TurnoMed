@@ -31,65 +31,210 @@
 #decorador @login_manager.user_loader ----> este es el puente entre la sesion y tu base de datos.
 #Flask_login lo llama automaticamente en cada peticion para reconstruir el objeto User a partir del id guardado en l cookie
 
+from flask import Flask, render_template, redirect, url_for, request, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import check_password_hash
 
-
-
-from flask import Flask, render_template, redirect, url_for, request, session
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
+from Back import (
+    inicializar_base_de_datos,
+    buscar_usuario_por_email,
+    buscar_usuario_por_id,
+    registrar_paciente,
+    obtener_pacientes,
+    cargar_horario,
+    obtener_horarios_disponibles,
+    asignar_turno,
+    obtener_turnos,
+    obtener_turnos_por_paciente,
+    obtener_turnos_por_medico,
+    cancelar_turno,
+    obtener_medico_actual
+)
 
 app = Flask(__name__)
-app.secret_key = 'clave-secreta-muy-segura'
+app.secret_key = "clave-secreta-turnomed"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # redirige si no autenticado
+login_manager.login_view = "login"
 
-# Simulación de base de datos
-users_db = {
-    'admin': {'password': generate_password_hash('admin123'), 'id': '1'}
-}
+inicializar_base_de_datos()
+
 
 class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
+    def __init__(self, usuario):
+        self.id = str(usuario["id_usuario"])
+        self.nombre = usuario["nombre"]
+        self.apellido = usuario["apellido"]
+        self.email = usuario["email"]
+        self.rol = usuario["rol"]
+
 
 @login_manager.user_loader
 def load_user(user_id):
-    for username, data in users_db.items():
-        if data['id'] == user_id:
-            return User(user_id, username)
+    usuario = buscar_usuario_por_id(user_id)
+    if usuario:
+        return User(usuario)
     return None
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/")
+def inicio():
+    return redirect(url_for("login"))
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-        user_data = users_db.get(username)
-        if user_data and check_password_hash(user_data['password'], password):
-            user = User(user_data['id'], username)
+        usuario = buscar_usuario_por_email(email)
+
+        if usuario and check_password_hash(usuario["password"], password):
+            user = User(usuario)
             login_user(user)
-            return redirect(url_for('dashboard'))
 
-        return 'Credenciales inválidas', 401
+            if user.rol == "admin":
+                return redirect(url_for("admin"))
+            elif user.rol == "paciente":
+                return redirect(url_for("paciente"))
+            elif user.rol == "medico":
+                return redirect(url_for("medico"))
 
-    return render_template('login.html')
+        flash("Correo o contraseña incorrectos.")
+        return redirect(url_for("login"))
 
-@app.route('/logout')
+    return render_template("login.html")
+
+
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        dni = request.form["dni"]
+        telefono = request.form["telefono"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        try:
+            registrar_paciente(nombre, apellido, dni, telefono, email, password)
+            flash("Registro exitoso. Ya podés iniciar sesión.")
+            return redirect(url_for("login"))
+        except Exception:
+            flash("No se pudo registrar. El correo ya puede estar registrado.")
+            return redirect(url_for("registro"))
+
+    return render_template("registro.html")
+
+
+@app.route("/admin")
+@login_required
+def admin():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    pacientes = obtener_pacientes()
+    horarios = obtener_horarios_disponibles()
+    turnos = obtener_turnos()
+
+    return render_template(
+        "admin.html",
+        pacientes=pacientes,
+        horarios=horarios,
+        turnos=turnos,
+        usuario=current_user
+    )
+
+
+@app.route("/cargar_horario", methods=["POST"])
+@login_required
+def cargar_horario_route():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    medico = request.form["medico"]
+    especialidad = request.form["especialidad"]
+    fecha = request.form["fecha"]
+    hora = request.form["hora"]
+
+    cargar_horario(medico, especialidad, fecha, hora)
+    flash("Horario cargado correctamente.")
+    return redirect(url_for("admin"))
+
+
+@app.route("/asignar_turno", methods=["POST"])
+@login_required
+def asignar_turno_route():
+    if current_user.rol != "admin":
+        return redirect(url_for("login"))
+
+    id_usuario = request.form["id_usuario"]
+    id_horario = request.form["id_horario"]
+
+    resultado = asignar_turno(id_usuario, id_horario)
+
+    if resultado:
+        flash("Turno asignado correctamente.")
+    else:
+        flash("El horario ya no está disponible.")
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/cancelar_turno/<int:id_turno>")
+@login_required
+def cancelar_turno_route(id_turno):
+    if current_user.rol not in ["admin", "paciente"]:
+        return redirect(url_for("login"))
+
+    cancelar_turno(id_turno)
+
+    if current_user.rol == "admin":
+        return redirect(url_for("admin"))
+
+    return redirect(url_for("paciente"))
+
+
+@app.route("/paciente")
+@login_required
+def paciente():
+    if current_user.rol != "paciente":
+        return redirect(url_for("login"))
+
+    turnos = obtener_turnos_por_paciente(current_user.id)
+
+    return render_template(
+        "paciente.html",
+        usuario=current_user,
+        turnos=turnos
+    )
+
+
+@app.route("/medico")
+@login_required
+def medico():
+    if current_user.rol != "medico":
+        return redirect(url_for("login"))
+
+    nombre_medico = obtener_medico_actual()
+    turnos = obtener_turnos_por_medico(nombre_medico)
+
+    return render_template(
+        "medico.html",
+        usuario=current_user,
+        turnos=turnos,
+        medico=nombre_medico
+    )
+
+
+@app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    return 'Bienvenido al dashboard'
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-    
