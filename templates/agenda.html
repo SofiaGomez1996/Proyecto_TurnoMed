@@ -10,16 +10,16 @@
         table { width: 100%; border-collapse: collapse; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
         th { background-color: #0077b6; color: white; padding: 15px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #caf0f8; }
-        /* Estilo del botón celeste */
         .btn-asignar { background-color: #00b4d8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .btn-asignar:hover { background-color: #0077b6; }
+        .estado { color: green; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Dr. Jonathan Triñanes</h1>
-        <a href="/asignar-turno" class="btn-asignar">+ Asignar Turno</a>
+        <h1>{{ medico }}</h1>
+        <a href="/asignar_turno" class="btn-asignar">+ Asignar Turno</a>
     </div>
 
     <div class="container">
@@ -27,6 +27,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Fecha</th>
                     <th>Hora</th>
                     <th>Paciente</th>
                     <th>Especialidad</th>
@@ -36,14 +37,15 @@
             <tbody>
                 {% for t in turnos %}
                 <tr>
+                    <td>{{ t.fecha }}</td>
                     <td>{{ t.hora }}</td>
                     <td>{{ t.paciente }}</td>
                     <td>{{ t.especialidad }}</td>
-                    <td style="color: red; font-weight: bold;">{{ t.estado }}</td>
+                    <td><span class="estado">Confirmado</span></td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" style="text-align: center;">No hay turnos cargados. ¡Dale al botón de arriba!</td>
+                    <td colspan="5" style="text-align: center;">No hay turnos cargados. ¡Dale al botón de arriba!</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -2,56 +2,46 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-<form method="POST" action="/registro" class="auth-form">
+    <title>Registro - TurnoMed</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
 
-    <div class="form-grid">
-        <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            required
-        >
+    <div class="auth-card">
 
-        <input
-            type="text"
-            name="apellido"
-            placeholder="Apellido"
-            required
-        >
+        <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo">
+
+        <h1>Crear cuenta</h1>
+        <p>Completá tus datos para registrarte como paciente.</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alerta">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/registro" class="auth-form">
+
+            <div class="form-grid">
+                <input type="text" name="nombre" placeholder="Nombre" required>
+                <input type="text" name="apellido" placeholder="Apellido" required>
+            </div>
+
+            <input type="text" name="dni" placeholder="DNI" required>
+            <input type="text" name="telefono" placeholder="Teléfono" required>
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+
+            <button type="submit">Registrarme</button>
+
+        </form>
+
+        <div class="auth-footer">
+            <span>¿Ya tenés cuenta?</span>
+            <a href="/login">Iniciar sesión</a>
+        </div>
+
     </div>
 
-    <input
-        type="text"
-        name="dni"
-        placeholder="DNI"
-        required
-    >
-
-    <input
-        type="text"
-        name="telefono"
-        placeholder="Teléfono"
-        required
-    >
-
-    <input
-        type="email"
-        name="email"
-        placeholder="Correo electrónico"
-        required
-    >
-
-    <input
-        type="password"
-        name="password"
-        placeholder="Contraseña"
-        required
-    >
-
-    <button type="submit">
-        Registrarme
-    </button>
-
-</form>
 </body>
 </html>

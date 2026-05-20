@@ -70,13 +70,11 @@
                                 <td>{{ turno.especialidad }}</td>
                                 <td>{{ turno.fecha }}</td>
                                 <td>{{ turno.hora }}</td>
-                                <td><span class="estado">{{ turno.estado }}</span></td>
+                                <td><span class="estado">Confirmado</span></td>
                                 <td>
-                                    {% if turno.estado != "Cancelado" %}
-                                        <a class="btn-danger" href="/cancelar_turno/{{ turno.id_turno }}">Cancelar</a>
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                                    <form method="POST" action="/cancelar_turno/{{ turno.id }}">
+                                        <button type="submit" class="btn-danger">Cancelar</button>
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}

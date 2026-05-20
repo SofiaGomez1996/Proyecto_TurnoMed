@@ -13,19 +13,26 @@
 <body>
     <div class="card">
         <h2 style="color: #004a99;">Nuevo Turno</h2>
-        <form action="/asignar-turno" method="POST">
-            <label>Paciente:</label>
-            <input type="text" name="paciente" required>
-            
-            <label>Especialidad:</label>
-            <input type="text" name="especialidad" required>
+        <form action="/asignar_turno" method="POST">
 
-            <label>Horario:</label>
-            <select name="horario">
-                {% for h in horarios %}
-                    <option value="{{ h }}">{{ h }}</option>
+            <label>Paciente:</label>
+            <select name="id_paciente" required>
+                <option value="">-- Seleccioná un paciente --</option>
+                {% for p in pacientes %}
+                    <option value="{{ p.id_usuario }}">{{ p.apellido }}, {{ p.nombre }}</option>
                 {% endfor %}
             </select>
+
+            <label>Horario disponible:</label>
+            <select name="id_horario" required>
+                <option value="">-- Seleccioná un horario --</option>
+                {% for h in horarios %}
+                    <option value="{{ h.id_horario }}">
+                        {{ h.fecha }} {{ h.hora }} — {{ h.medico }} ({{ h.especialidad }})
+                    </option>
+                {% endfor %}
+            </select>
+
             <button type="submit">Guardar Turno</button>
         </form>
     </div>

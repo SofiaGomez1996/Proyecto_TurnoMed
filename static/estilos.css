@@ -258,6 +258,11 @@ button:hover {
     background: #e7f8f5;
     color: #009688;
     border: 1px solid #b8eee5;
+    height: 56px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .btn-secondary:hover {
@@ -312,13 +317,27 @@ tbody tr {
     font-size: 13px;
 }
 
+/* Botón cancelar dentro de tabla */
 .btn-danger {
-    text-decoration: none;
     background: #fee2e2;
     color: #b91c1c;
     padding: 9px 13px;
     border-radius: 10px;
     font-weight: 700;
+    border: none;
+    cursor: pointer;
+    height: auto;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-danger:hover {
+    background: #fecaca;
+}
+
+/* El form dentro de la celda no debe ocupar espacio extra */
+td form {
+    display: inline;
 }
 
 .empty-state {

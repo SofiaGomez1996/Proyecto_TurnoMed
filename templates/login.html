@@ -5,52 +5,33 @@
     <title>Login - TurnoMed</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
 </head>
-<form method="POST" action="/login" class="auth-form">
-    <input
-        type="email"
-        name="email"
-        placeholder="Correo electrónico"
-        required
-    >
+<body>
 
-    <input
-        type="password"
-        name="password"
-        placeholder="Contraseña"
-        required
-    >
+    <div class="auth-card">
 
-    <button type="submit">
-        Ingresar
-    </button>
-</form>
+        <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo">
 
-<div class="auth-card">
+        <h1>Bienvenido a <span>TurnoMed</span></h1>
+        <p>Iniciá sesión para consultar o gestionar turnos.</p>
 
-    <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alerta">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
 
-    <h1>Bienvenido a <span>TurnoMed</span></h1>
-    <p>Iniciá sesión para consultar o gestionar turnos.</p>
+        <form method="POST" action="/login" class="auth-form">
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alerta">{{ messages[0] }}</div>
-        {% endif %}
-    {% endwith %}
+        <div class="auth-footer">
+            <span>¿No tenés cuenta?</span>
+            <a href="/registro">Crear cuenta de paciente</a>
+        </div>
 
-    <form method="POST" action="/login" class="auth-form">
-        <input type="email" name="email" placeholder="Correo electrónico" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
-
-        <button type="submit">Ingresar</button>
-    </form>
-
-    <div class="auth-footer">
-        <span>¿No tenés cuenta?</span>
-        <a href="/registro">Crear cuenta de paciente</a>
     </div>
-
-</div>
 
 </body>
 </html>
