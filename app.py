@@ -194,49 +194,41 @@ def asignar_turno(id_usuario, id_horario):
     finally:
         conn.close()  # Cerramos la conexión siempreS
 
+
 @app.route("/asignar_turno", methods=["POST"])
 @login_required
 def asignar_turno_route():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
 
-    # Capturamos lo que la admin escribe en la web
-    id_usuario = request.form["id_usuario"]  # Nombre del paciente
-    id_horario = request.form["id_horario"]  # Hora seleccionada
+    # 1. Capturamos los datos que vienen del formulario (name="paciente", etc)
+    nombre_paciente = request.form["paciente"]
+    especialidad = request.form["especialidad"]
+    hora = request.form["horario"]
 
-    # Conectamos directo a tu base de datos para guardar el turno
+    # 2. Lógica para elegir el médico (aquí es donde ya no es "fijo")
+    if "Pediatría" in especialidad:
+        medico_final = "Dr. Perez"
+    elif "Neurología" in especialidad:
+        medico_final = "Dra. Romero"
+    elif "Urología" in especialidad:
+        medico_final = "Dr. Argañaraz"
+    else:
+        medico_final = "Dr. Jonathan Triñanes"
+
+    # 3. Guardamos en la base de datos
     import sqlite3
     conn = sqlite3.connect('database/turnomed.db')
     cursor = conn.cursor()
-    
-    try:
-        # Metemos el turno asignándoselo a Jonathan Triñanes automáticamente
-        cursor.execute(
-            "INSERT INTO turnos (paciente, hora, medico, especialidad) VALUES (?, ?, ?, ?)",
-            (id_usuario, id_horario, "Jonathan Triñanes", "Obstetricia")
-        )
-        conn.commit()  # Guardamos los cambios en el archivo .db
-        flash("Turno asignado correctamente.")
-    except sqlite3.Error as e:
-        print(f"Error en la base de datos: {e}")
-        flash("Hubo un error al guardar el turno.")
-    finally:
-        conn.close()   # Cerramos la conexión para que no se trabe
+    cursor.execute(
+        "INSERT INTO turnos (paciente, hora, medico, especialidad) VALUES (?, ?, ?, ?)",
+        (nombre_paciente, hora, medico_final, especialidad)
+    )
+    conn.commit()
+    conn.close()
 
+    flash("Turno asignado correctamente.")
     return redirect(url_for("admin"))
-@app.route("/cancelar_turno/<int:id_turno>")
-@login_required
-def cancelar_turno_route(id_turno):
-    if current_user.rol not in ["admin", "paciente"]:
-        return redirect(url_for("login"))
-
-    cancelar_turno(id_turno)
-
-    if current_user.rol == "admin":
-        return redirect(url_for("admin"))
-
-    return redirect(url_for("paciente"))
-
 
 @app.route("/paciente")
 @login_required
@@ -266,7 +258,7 @@ def obtener_turnos_por_medico(nombre):
 
 def obtener_medico_actual():
     # De manera temporal para probar tu vista, devolvemos al Dr. Jonathan Triñanes
-    return "Jonathan Triñanes"
+    return "Medico_nombre_actual"
 
 @app.route("/medico")
 # @login_required  <-- Poné el signo # acá adelante para desactivar el bloqueo temporalmente
