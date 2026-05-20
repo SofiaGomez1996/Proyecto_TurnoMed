@@ -174,7 +174,25 @@ def cargar_horario_route():
     cargar_horario(medico, especialidad, fecha, hora)
     flash("Horario cargado correctamente.")
     return redirect(url_for("admin"))
-
+def asignar_turno(id_usuario, id_horario):
+    import sqlite3
+    # Nos conectamos a la base de datos de TurnoMed
+    conn = sqlite3.connect('database/turnomed.db')
+    cursor = conn.cursor()
+    
+    try:
+        # Insertamos el turno usando los datos que vienen del formulario
+        cursor.execute(
+            "INSERT INTO turnos (paciente, hora, medico, especialidad) VALUES (?, ?, ?, ?)",
+            (id_usuario, id_horario, "Jonathan Triñanes", "Cardiología")
+        )
+        conn.commit() # Guardamos los cambios en el archivo .db
+        return True   # Le avisamos a la ruta que salió todo bien
+    except sqlite3.Error as e:
+        print(f"Error en la base de datos: {e}")
+        return False  # Si algo falló, avisamos
+    finally:
+        conn.close()  # Cerramos la conexión siempreS
 
 @app.route("/asignar_turno", methods=["POST"])
 @login_required
@@ -182,19 +200,30 @@ def asignar_turno_route():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
 
-    id_usuario = request.form["id_usuario"]
-    id_horario = request.form["id_horario"]
+    # Capturamos lo que la admin escribe en la web
+    id_usuario = request.form["id_usuario"]  # Nombre del paciente
+    id_horario = request.form["id_horario"]  # Hora seleccionada
 
-    resultado = asignar_turno(id_usuario, id_horario)
-
-    if resultado:
+    # Conectamos directo a tu base de datos para guardar el turno
+    import sqlite3
+    conn = sqlite3.connect('database/turnomed.db')
+    cursor = conn.cursor()
+    
+    try:
+        # Metemos el turno asignándoselo a Jonathan Triñanes automáticamente
+        cursor.execute(
+            "INSERT INTO turnos (paciente, hora, medico, especialidad) VALUES (?, ?, ?, ?)",
+            (id_usuario, id_horario, "Jonathan Triñanes", "Obstetricia")
+        )
+        conn.commit()  # Guardamos los cambios en el archivo .db
         flash("Turno asignado correctamente.")
-    else:
-        flash("El horario ya no está disponible.")
+    except sqlite3.Error as e:
+        print(f"Error en la base de datos: {e}")
+        flash("Hubo un error al guardar el turno.")
+    finally:
+        conn.close()   # Cerramos la conexión para que no se trabe
 
     return redirect(url_for("admin"))
-
-
 @app.route("/cancelar_turno/<int:id_turno>")
 @login_required
 def cancelar_turno_route(id_turno):
