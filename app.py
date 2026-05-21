@@ -12,7 +12,7 @@ app.secret_key = "clave-secreta-turnomed"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"   # Si no está logueado, redirige a /login
+login_manager.login_view = "login"
 
 
 # ─────────────────────────────────────────────
@@ -21,156 +21,60 @@ login_manager.login_view = "login"   # Si no está logueado, redirige a /login
 DB_PATH = "database/turnomed.db"
 
 def get_conn():
-    """Devuelve una conexión con row_factory para leer columnas por nombre."""
     os.makedirs("database", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-<<<<<<< HEAD
-#Crea la tabla de usuarios si no existe y agrega un usuario admin por defecto
-
-#NOTA: TEXT es para cadenas de texto, INTEGER es para numeros enteros, UNIQUE asegura que no se repitan los valores en esa columna, NOT NULL obliga a que ese campo tenga un valor, PRIMARY KEY es la clave primaria que identifica univocamente cada fila y AUTOINCREMENT hace que el id se incremente automaticamente cada vez que se agrega un nuevo usuario.
-#UNIQUE se usa para evitar que se repitan valores en campos como nombre de usuario, email, telefono o documento, lo que ayuda a mantener la integridad de los datos y evita conflictos al registrar nuevos usuarios.
-#NOT NULL se usa para asegurar que ciertos campos esenciales como nombre, apellido, telefono, email, documento y password siempre tengan un valor al crear un nuevo usuario, lo que garantiza que la información sea completa y útil para la aplicación.
-
-def crear_tabla():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT UNIQUE NOT NULL,
-            apellido TEXT NOT NULL,
-            telefono INTEGER UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            documento INTEGER UNIQUE NOT NULL,
-            password TEXT NOT NULL
-=======
 
 def inicializar_base_de_datos():
     conn = get_conn()
     cursor = conn.cursor()
 
-    # Tabla de usuarios (admin, médicos, pacientes)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
-            id_usuario  INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre      TEXT    NOT NULL,
-            apellido    TEXT    NOT NULL,
-            dni         TEXT,
-            telefono    TEXT,
-            email       TEXT    UNIQUE NOT NULL,
-            password    TEXT    NOT NULL,
-            rol         TEXT    NOT NULL DEFAULT 'paciente'
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
+            id_usuario   INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre       TEXT    NOT NULL,
+            apellido     TEXT    NOT NULL,
+            dni          TEXT,
+            telefono     TEXT,
+            email        TEXT    UNIQUE NOT NULL,
+            password     TEXT    NOT NULL,
+            rol          TEXT    NOT NULL DEFAULT 'paciente'
         )
     """)
 
-    # Tabla de horarios disponibles que carga el admin
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS horarios (
-            id_horario  INTEGER PRIMARY KEY AUTOINCREMENT,
-            medico      TEXT    NOT NULL,
-            especialidad TEXT   NOT NULL,
-            fecha       TEXT    NOT NULL,
-            hora        TEXT    NOT NULL,
-            ocupado     INTEGER NOT NULL DEFAULT 0   -- 0 = libre, 1 = ocupado
+            id_horario   INTEGER PRIMARY KEY AUTOINCREMENT,
+            medico       TEXT    NOT NULL,
+            especialidad TEXT    NOT NULL,
+            fecha        TEXT    NOT NULL,
+            hora         TEXT    NOT NULL,
+            ocupado      INTEGER NOT NULL DEFAULT 0
         )
     """)
 
-    # Tabla de turnos asignados
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS turnos (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_paciente INTEGER NOT NULL,
-            id_horario  INTEGER NOT NULL,
-            paciente    TEXT    NOT NULL,
-            medico      TEXT    NOT NULL,
-            especialidad TEXT   NOT NULL,
-            fecha       TEXT    NOT NULL,
-            hora        TEXT    NOT NULL,
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_paciente  INTEGER NOT NULL,
+            id_horario   INTEGER NOT NULL,
+            paciente     TEXT    NOT NULL,
+            medico       TEXT    NOT NULL,
+            especialidad TEXT    NOT NULL,
+            fecha        TEXT    NOT NULL,
+            hora         TEXT    NOT NULL,
             FOREIGN KEY (id_paciente) REFERENCES usuarios(id_usuario),
             FOREIGN KEY (id_horario)  REFERENCES horarios(id_horario)
         )
     """)
 
     conn.commit()
-<<<<<<< HEAD
-
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS turnos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER NOT NULL,
-            nombre TEXT NOT NULL,
-            apellido TEXT NOT NULL,
-            telefono INTEGER UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            documento INTEGER UNIQUE NOT NULL,
-            fecha TEXT NOT NULL,
-            hora TEXT NOT NULL,
-            especialidad TEXT NOT NULL,
-            doctor TEXT NOT NULL,
-            estado TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-
-
-    # Crear usuario admin por defecto
-    admin = conn.execute(
-        'SELECT * FROM usuarios WHERE nombre = ?',
-        ('admin',)
-    ).fetchone()
-
-    if not admin:
-        conn.execute(
-            'INSERT INTO usuarios (nombre, apellido, telefono, email, documento, password) VALUES (?, ?, ?, ?, ?, ?)',
-            ('admin', 'admin', '123456789', 'admin@example.com', '123456789', generate_password_hash('admin123'))
-        )
-        conn.commit()
-
-=======
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
     conn.close()
 
-
-inicializar_base_de_datos()
-
-
-# ─────────────────────────────────────────────
-#  MODELO DE USUARIO
-# ─────────────────────────────────────────────
-class User(UserMixin):
-    def __init__(self, usuario):
-        self.id      = str(usuario["id_usuario"])
-        self.nombre  = usuario["nombre"]
-        self.apellido = usuario["apellido"]
-        self.email   = usuario["email"]
-        self.rol     = usuario["rol"]
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Flask-Login llama esto en cada petición para reconstruir el usuario."""
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (user_id,))
-    row = cursor.fetchone()
-    conn.close()
-<<<<<<< HEAD
-
-    if user_data:
-        return User(user_data['id'], user_data['nombre'])
-=======
-    if row:
-        return User(row)
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
-    return None
-
-inicializar_base_de_datos()
 
 def crear_admin_por_defecto():
-    from werkzeug.security import generate_password_hash
     conn = get_conn()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@turnomed.com'")
@@ -183,7 +87,35 @@ def crear_admin_por_defecto():
         print("Admin creado automáticamente.")
     conn.close()
 
+
+inicializar_base_de_datos()
 crear_admin_por_defecto()
+
+
+# ─────────────────────────────────────────────
+#  MODELO DE USUARIO
+# ─────────────────────────────────────────────
+class User(UserMixin):
+    def __init__(self, usuario):
+        self.id       = str(usuario["id_usuario"])
+        self.nombre   = usuario["nombre"]
+        self.apellido = usuario["apellido"]
+        self.email    = usuario["email"]
+        self.rol      = usuario["rol"]
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return User(row)
+    return None
+
+
 # ─────────────────────────────────────────────
 #  FUNCIONES AUXILIARES DE BASE DE DATOS
 # ─────────────────────────────────────────────
@@ -229,7 +161,6 @@ def cargar_horario(medico, especialidad, fecha, hora):
 
 
 def obtener_horarios_disponibles():
-    """Devuelve solo los horarios que todavía no están ocupados."""
     conn = get_conn()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM horarios WHERE ocupado = 0 ORDER BY fecha, hora")
@@ -285,25 +216,11 @@ def login():
         email    = request.form["email"]
         password = request.form["password"]
 
-<<<<<<< HEAD
-        conn = get_db_connection()
-        user_data = conn.execute(
-            'SELECT * FROM usuarios WHERE email = ?',
-            (username,)
-        ).fetchone()
-        conn.close()
-
-        if user_data and check_password_hash(user_data['password'], password):
-            user = User(user_data['id'], user_data['nombre'])
-            login_user(user)
-            return redirect(url_for('turnos'))
-=======
         usuario = buscar_usuario_por_email(email)
 
         if usuario and check_password_hash(usuario["password"], password):
             user = User(usuario)
             login_user(user)
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
 
             if user.rol == "admin":
                 return redirect(url_for("admin"))
@@ -345,48 +262,6 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-<<<<<<< HEAD
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        apellido = request.form['apellido']
-        telefono = request.form['telefono']
-        email = request.form['email']
-        documento = request.form['documento']
-        password = request.form['password']
-
-        conn = get_db_connection()
-
-        # Verificar si el usuario ya existe
-        usuario_existente = conn.execute(
-            'SELECT * FROM usuarios WHERE nombre = ?',
-            (nombre,)
-        ).fetchone()
-
-        if usuario_existente:
-            conn.close()
-            return 'El usuario ya existe'
-
-        # Guardar nuevo usuario
-        password_hash = generate_password_hash(password)
-        conn.execute(
-            'INSERT INTO usuarios (nombre, apellido, telefono, email, documento, password) VALUES (?, ?, ?, ?, ?, ?)',
-            (nombre, apellido, telefono, email, documento, password_hash)
-        )
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('login'))
-
-    return render_template('registro.html')
-
-
-@app.route ('/turnos')
-@login_required
-def turnos():
-    return render_template('turnos.html')
-=======
 
 # ─────────────────────────────────────────────
 #  PANEL ADMIN
@@ -396,7 +271,6 @@ def turnos():
 def admin():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
 
     pacientes = obtener_pacientes()
     horarios  = obtener_horarios_disponibles()
@@ -417,10 +291,10 @@ def cargar_horario_route():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
 
-    medico      = request.form["medico"]
+    medico       = request.form["medico"]
     especialidad = request.form["especialidad"]
-    fecha       = request.form["fecha"]
-    hora        = request.form["hora"]
+    fecha        = request.form["fecha"]
+    hora         = request.form["hora"]
 
     cargar_horario(medico, especialidad, fecha, hora)
     flash("Horario cargado correctamente.")
@@ -433,10 +307,9 @@ def asignar_turno_route():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
 
-    id_paciente  = request.form["id_paciente"]
-    id_horario   = request.form["id_horario"]
+    id_paciente = request.form["id_paciente"]
+    id_horario  = request.form["id_horario"]
 
-    # Verificamos que el horario exista y esté libre
     conn = get_conn()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM horarios WHERE id_horario = ? AND ocupado = 0", (id_horario,))
@@ -447,7 +320,6 @@ def asignar_turno_route():
         flash("El horario ya está ocupado o no existe.")
         return redirect(url_for("admin"))
 
-    # Buscamos el nombre del paciente
     cursor.execute("SELECT nombre, apellido FROM usuarios WHERE id_usuario = ?", (id_paciente,))
     paciente_row = cursor.fetchone()
 
@@ -458,15 +330,12 @@ def asignar_turno_route():
 
     nombre_paciente = f"{paciente_row['nombre']} {paciente_row['apellido']}"
 
-    # Insertamos el turno
     cursor.execute(
         """INSERT INTO turnos (id_paciente, id_horario, paciente, medico, especialidad, fecha, hora)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (id_paciente, id_horario, nombre_paciente,
          horario["medico"], horario["especialidad"], horario["fecha"], horario["hora"])
     )
-
-    # Marcamos el horario como ocupado
     cursor.execute("UPDATE horarios SET ocupado = 1 WHERE id_horario = ?", (id_horario,))
 
     conn.commit()
@@ -485,14 +354,11 @@ def cancelar_turno(id_turno):
     conn = get_conn()
     cursor = conn.cursor()
 
-    # Obtenemos el id_horario antes de borrar para liberarlo
     cursor.execute("SELECT id_horario FROM turnos WHERE id = ?", (id_turno,))
     turno = cursor.fetchone()
 
     if turno:
-        # Liberamos el horario
         cursor.execute("UPDATE horarios SET ocupado = 0 WHERE id_horario = ?", (turno["id_horario"],))
-        # Borramos el turno
         cursor.execute("DELETE FROM turnos WHERE id = ?", (id_turno,))
         conn.commit()
         flash("Turno cancelado y horario liberado.")
@@ -522,10 +388,9 @@ def paciente():
 
 
 # ─────────────────────────────────────────────
-#  PANEL MÉDICO
+#  PANEL MÉDICO  (sin login para testing)
 # ─────────────────────────────────────────────
 @app.route("/medico")
-# @login_required
 def medico():
     nombre_medico = "Dr. Jonathan Triñanes"
     turnos = obtener_turnos_por_medico(nombre_medico)
@@ -536,13 +401,9 @@ def medico():
         medico=nombre_medico
     )
 
+
 # ─────────────────────────────────────────────
 #  ARRANQUE
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True)
-<<<<<<< HEAD
-    
-
-=======
->>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
