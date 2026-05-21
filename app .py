@@ -143,7 +143,7 @@ def login():
         if user_data and check_password_hash(user_data['password'], password):
             user = User(user_data['id'], user_data['nombre'])
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('turnos'))
 
         return 'Credenciales inválidas', 401
 
