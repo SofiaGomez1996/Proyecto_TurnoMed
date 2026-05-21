@@ -2,36 +2,55 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login - TurnoMed</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+    <title>Login</title>
+
+        <link rel="stylesheet"
+      href="{{ url_for('static', filename='styles/estilos.css') }}">
 </head>
+
 <body>
+    <div class="main-container">
 
-    <div class="auth-card">
-
-        <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo">
-
-        <h1>Bienvenido a <span>TurnoMed</span></h1>
-        <p>Iniciá sesión para consultar o gestionar turnos.</p>
-
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alerta">{{ messages[0] }}</div>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="/login" class="auth-form">
-            <input type="email" name="email" placeholder="Correo electrónico" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <button type="submit">Ingresar</button>
-        </form>
-
-        <div class="auth-footer">
-            <span>¿No tenés cuenta?</span>
-            <a href="/registro">Crear cuenta de paciente</a>
-        </div>
-
+         <div class="login-logo">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="Logo TurnoMed">
     </div>
 
+    <div class="login-container">
+        <div class ="login-card">
+            <h2>Iniciar sesión</h2>
+
+
+
+            <p>
+                ¿No tienes cuenta? 
+                <a href="{{ url_for('registro') }}">Regístrate</a>
+            </p>
+
+
+        <div class="login-methods">
+            <form method="POST" action="/login">
+
+                <div class="input-group">
+
+                    <label>Email</label>
+                    <input type="text" name="username" required placeholder="Ingrese su email">
+                </div>
+
+                <div class="input-group">
+        
+                    <label>Contraseña:</label>
+                    <input type="password" name="password" required placeholder="Ingrese su contraseña">
+                    
+                </div>
+
+
+                <button type="submit"> 
+                    Iniciar sesión
+                </button>
+            </form>
+        </div>
+        </div>
+    </div>
+    </div>
 </body>
 </html>

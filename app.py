@@ -27,6 +27,25 @@ def get_conn():
     conn.row_factory = sqlite3.Row
     return conn
 
+<<<<<<< HEAD
+#Crea la tabla de usuarios si no existe y agrega un usuario admin por defecto
+
+#NOTA: TEXT es para cadenas de texto, INTEGER es para numeros enteros, UNIQUE asegura que no se repitan los valores en esa columna, NOT NULL obliga a que ese campo tenga un valor, PRIMARY KEY es la clave primaria que identifica univocamente cada fila y AUTOINCREMENT hace que el id se incremente automaticamente cada vez que se agrega un nuevo usuario.
+#UNIQUE se usa para evitar que se repitan valores en campos como nombre de usuario, email, telefono o documento, lo que ayuda a mantener la integridad de los datos y evita conflictos al registrar nuevos usuarios.
+#NOT NULL se usa para asegurar que ciertos campos esenciales como nombre, apellido, telefono, email, documento y password siempre tengan un valor al crear un nuevo usuario, lo que garantiza que la información sea completa y útil para la aplicación.
+
+def crear_tabla():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT UNIQUE NOT NULL,
+            apellido TEXT NOT NULL,
+            telefono INTEGER UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            documento INTEGER UNIQUE NOT NULL,
+            password TEXT NOT NULL
+=======
 
 def inicializar_base_de_datos():
     conn = get_conn()
@@ -43,6 +62,7 @@ def inicializar_base_de_datos():
             email       TEXT    UNIQUE NOT NULL,
             password    TEXT    NOT NULL,
             rol         TEXT    NOT NULL DEFAULT 'paciente'
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
         )
     """)
 
@@ -75,6 +95,42 @@ def inicializar_base_de_datos():
     """)
 
     conn.commit()
+<<<<<<< HEAD
+
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS turnos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            nombre TEXT NOT NULL,
+            apellido TEXT NOT NULL,
+            telefono INTEGER UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            documento INTEGER UNIQUE NOT NULL,
+            fecha TEXT NOT NULL,
+            hora TEXT NOT NULL,
+            especialidad TEXT NOT NULL,
+            doctor TEXT NOT NULL,
+            estado TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+
+
+    # Crear usuario admin por defecto
+    admin = conn.execute(
+        'SELECT * FROM usuarios WHERE nombre = ?',
+        ('admin',)
+    ).fetchone()
+
+    if not admin:
+        conn.execute(
+            'INSERT INTO usuarios (nombre, apellido, telefono, email, documento, password) VALUES (?, ?, ?, ?, ?, ?)',
+            ('admin', 'admin', '123456789', 'admin@example.com', '123456789', generate_password_hash('admin123'))
+        )
+        conn.commit()
+
+=======
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
     conn.close()
 
 
@@ -101,8 +157,14 @@ def load_user(user_id):
     cursor.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
+<<<<<<< HEAD
+
+    if user_data:
+        return User(user_data['id'], user_data['nombre'])
+=======
     if row:
         return User(row)
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
     return None
 
 inicializar_base_de_datos()
@@ -223,11 +285,25 @@ def login():
         email    = request.form["email"]
         password = request.form["password"]
 
+<<<<<<< HEAD
+        conn = get_db_connection()
+        user_data = conn.execute(
+            'SELECT * FROM usuarios WHERE email = ?',
+            (username,)
+        ).fetchone()
+        conn.close()
+
+        if user_data and check_password_hash(user_data['password'], password):
+            user = User(user_data['id'], user_data['nombre'])
+            login_user(user)
+            return redirect(url_for('turnos'))
+=======
         usuario = buscar_usuario_por_email(email)
 
         if usuario and check_password_hash(usuario["password"], password):
             user = User(usuario)
             login_user(user)
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
 
             if user.rol == "admin":
                 return redirect(url_for("admin"))
@@ -269,6 +345,48 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
+<<<<<<< HEAD
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        apellido = request.form['apellido']
+        telefono = request.form['telefono']
+        email = request.form['email']
+        documento = request.form['documento']
+        password = request.form['password']
+
+        conn = get_db_connection()
+
+        # Verificar si el usuario ya existe
+        usuario_existente = conn.execute(
+            'SELECT * FROM usuarios WHERE nombre = ?',
+            (nombre,)
+        ).fetchone()
+
+        if usuario_existente:
+            conn.close()
+            return 'El usuario ya existe'
+
+        # Guardar nuevo usuario
+        password_hash = generate_password_hash(password)
+        conn.execute(
+            'INSERT INTO usuarios (nombre, apellido, telefono, email, documento, password) VALUES (?, ?, ?, ?, ?, ?)',
+            (nombre, apellido, telefono, email, documento, password_hash)
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('login'))
+
+    return render_template('registro.html')
+
+
+@app.route ('/turnos')
+@login_required
+def turnos():
+    return render_template('turnos.html')
+=======
 
 # ─────────────────────────────────────────────
 #  PANEL ADMIN
@@ -278,6 +396,7 @@ def logout():
 def admin():
     if current_user.rol != "admin":
         return redirect(url_for("login"))
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34
 
     pacientes = obtener_pacientes()
     horarios  = obtener_horarios_disponibles()
@@ -422,3 +541,8 @@ def medico():
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True)
+<<<<<<< HEAD
+    
+
+=======
+>>>>>>> 72acf28b083a51c870c5d77827117cb9d17b6c34

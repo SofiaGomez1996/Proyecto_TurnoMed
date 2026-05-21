@@ -2,46 +2,73 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro - TurnoMed</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+    <title>Registro</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+        <link rel="stylesheet"
+      href="{{ url_for('static', filename='styles/estilos_registros.css') }}">
 </head>
 <body>
+    <div class="login-container">
+        <div class ="login-card">
+            <i class="fa-solid fa-user" style="color: rgb(50, 85, 149);"></i>
+            <h2>Crear usuario</h2>
+        </div>
+    
+    <div class="login-methods">
+    <form method="POST">
 
-    <div class="auth-card">
-
-        <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo">
-
-        <h1>Crear cuenta</h1>
-        <p>Completá tus datos para registrarte como paciente.</p>
-
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alerta">{{ messages[0] }}</div>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="/registro" class="auth-form">
-
-            <div class="form-grid">
-                <input type="text" name="nombre" placeholder="Nombre" required>
-                <input type="text" name="apellido" placeholder="Apellido" required>
+        <div class="input-row">
+            <div class="input-group">
+                <label>Nombre:</label>
+                <input type="text" name="nombre" required placeholder="Ingrese su nombre">
             </div>
+        
 
-            <input type="text" name="dni" placeholder="DNI" required>
-            <input type="text" name="telefono" placeholder="Teléfono" required>
-            <input type="email" name="email" placeholder="Correo electrónico" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
+            <div class="input-group">
 
-            <button type="submit">Registrarme</button>
-
-        </form>
-
-        <div class="auth-footer">
-            <span>¿Ya tenés cuenta?</span>
-            <a href="/login">Iniciar sesión</a>
+                <label>Apellido:</label>
+                <input type="text" name="apellido" required placeholder="Ingrese su apellido">
+            </div>
         </div>
 
+        <div class="input-group">
+
+            <label>Telefono:</label>
+            <i class="fa-solid fa-phone"></i>
+            <input type="text" name="telefono" required placeholder="Ingrese su teléfono">
+        </div>
+
+        <div class="input-group">
+            <label>Email:</label>
+            <i class="fa-regular fa-envelope"></i>
+            <input type="email" name="email" required placeholder="Ingrese su email">
+        </div>
+        
+        <div class="input-group">
+
+            <label>Documento:</label>
+            <i class="fa-solid fa-passport"></i>
+            <input type="text" name="documento" required placeholder="Ingrese su documento">
+        </div>
+
+        <div class="input-group">
+
+            <label>Contraseña:</label>
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" name="password" required placeholder="Ingrese su contraseña">
+        </div>
+
+
+        
+    <button type="submit">Crear cuenta</button>
+        
+    </form>
     </div>
 
+    <br>
+    <a href="{{ url_for('login') }}">Volver al login</a>
+    </div>
 </body>
 </html>

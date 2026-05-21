@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Seleccionar Turno</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/estilos_turnos.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <h2>Solicitar Nuevo Turno</h2>
+            <form action="/confirmar-turno" method="POST">
+                
+                <label>Documento del Paciente</label>
+                <input type="text" name="dni" placeholder="Ej: 12345678" required>
+
+            <label>Especialidad Médica</label>
+            <select name="especialidad" required>
+                <option value="">Seleccione una especialidad</option>
+                <option value="clinica">Clínica Médica</option>
+                <option value="pediatria">Pediatría</option>
+                <option value="traumatologia">Traumatología</option>
+                <option value="cardiologia">Cardiología</option>
+                <option value="ginecologia">Ginecología</option>
+                <option value="odontologia">Odontología</option>
+            </select>
+
+            <label>Fecha</label>
+            <input type="date" name="fecha" required>
+
+            <label>Horario</label>
+            <input type="time" name="horario" min="09:00" max="18:00" required>
+
+            <button type="submit" class="btn-primary">Reservar Turno</button>
+        </form>
+        </div>
+    </div>
+</body>
+</html>
