@@ -105,7 +105,23 @@ def load_user(user_id):
         return User(row)
     return None
 
+inicializar_base_de_datos()
 
+def crear_admin_por_defecto():
+    from werkzeug.security import generate_password_hash
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@turnomed.com'")
+    if not cursor.fetchone():
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, apellido, email, password, rol) VALUES (?,?,?,?,?)",
+            ("Admin", "Sistema", "admin@turnomed.com", generate_password_hash("admin123"), "admin")
+        )
+        conn.commit()
+        print("Admin creado automáticamente.")
+    conn.close()
+
+crear_admin_por_defecto()
 # ─────────────────────────────────────────────
 #  FUNCIONES AUXILIARES DE BASE DE DATOS
 # ─────────────────────────────────────────────
