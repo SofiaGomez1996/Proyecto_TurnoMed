@@ -3,21 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
+
+        <link rel="stylesheet"
+      href="{{ url_for('static', filename='styles/estilos.css') }}">
 </head>
+
 <body>
-    <h2>Iniciar sesión</h2>
-    <p>¿No tenés cuenta? <a href="{{ url_for('registro') }}">Crear ususario</a></p>
+    <div class="main-container">
 
-    <form method="POST" action="/login">
-        <label>Usuario:</label>
-        <input type="text" name="username" required>
-        <br><br>
+         <div class="login-logo">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="Logo TurnoMed">
+    </div>
 
-        <label>Contraseña:</label>
-        <input type="password" name="password" required>
-        <br><br>
+    <div class="login-container">
+        <div class ="login-card">
+            <h2>Iniciar sesión</h2>
 
-        <button type="submit">Entrar</button>
-    </form>
+
+
+            <p>
+                ¿No tienes cuenta? 
+                <a href="{{ url_for('registro') }}">Regístrate</a>
+            </p>
+
+
+        <div class="login-methods">
+            <form method="POST" action="/login">
+
+                <div class="input-group">
+
+                    <label>Email</label>
+                    <input type="text" name="username" required placeholder="Ingrese su email">
+                </div>
+
+                <div class="input-group">
+        
+                    <label>Contraseña:</label>
+                    <input type="password" name="password" required placeholder="Ingrese su contraseña">
+                    
+                </div>
+
+
+                <button type="submit"> 
+                    Iniciar sesión
+                </button>
+            </form>
+        </div>
+        </div>
+    </div>
+    </div>
 </body>
 </html>

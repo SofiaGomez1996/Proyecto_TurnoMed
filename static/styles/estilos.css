@@ -1,0 +1,92 @@
+body {
+  margin: 0;
+  padding: 0;
+
+  background-color: #F0F4F8;
+
+  
+  height: 100vh; /* Asegura que el cuerpo ocupe toda la altura de la ventana */
+  display: flex;
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+
+  font-family: Inter, sans-serif;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 20px; /* Espacio entre el logo y el formulario */
+}
+
+.login-container {
+  background-color: #FFFFFF;
+  padding: 50px; /* Espaciado interno */
+  border-radius: 20px; /* Bordes redondeados */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
+  width: 350px; /* Ancho fijo para el formulario */
+  height: 330px; /* Altura fija para el formulario */
+  padding: 40px; /* Espaciado interno */
+
+}
+
+.login-card h2 {
+  text-align: left 50px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  
+  font-family: Inter, sans-serif;
+  margin-left: 10px;
+  
+
+
+}
+
+.login-card p {
+  text-align: center;
+}
+.login-methods form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espacio entre los métodos de inicio de sesión */
+}
+
+.login-logo img {
+  width: 250px; /* Ancho del logo */
+  height: auto; /* Mantener la proporción de la imagen */
+}
+
+.login-methods input {
+    width: 100%;
+
+    padding: 12px;
+
+    border-radius: 8px;
+    border: 1px solid #ccc;
+
+    font-size: 16px;
+}
+
+/* BOTON */
+.login-methods button {
+    padding: 14px;
+
+    border: none;
+    border-radius: 10px;
+
+    background-color: #0D3B66;
+    color: white;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+.login-card p{
+  position: relative;
+
+  top: 270px;
+}

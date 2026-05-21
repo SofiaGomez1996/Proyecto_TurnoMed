@@ -3,23 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <title>Registro</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+        <link rel="stylesheet"
+      href="{{ url_for('static', filename='styles/estilos_registros.css') }}">
 </head>
 <body>
-    <h2>Crear usuario</h2>
-
+    <div class="login-container">
+        <div class ="login-card">
+            <i class="fa-solid fa-user" style="color: rgb(50, 85, 149);"></i>
+            <h2>Crear usuario</h2>
+        </div>
+    
+    <div class="login-methods">
     <form method="POST">
-        <label>Usuario:</label>
-        <input type="text" name="username" required>
-        <br><br>
 
-        <label>Contraseña:</label>
-        <input type="password" name="password" required>
-        <br><br>
+        <div class="input-row">
+            <div class="input-group">
+                <label>Nombre:</label>
+                <input type="text" name="nombre" required placeholder="Ingrese su nombre">
+            </div>
+        
 
-        <button type="submit">Registrarse</button>
+            <div class="input-group">
+
+                <label>Apellido:</label>
+                <input type="text" name="apellido" required placeholder="Ingrese su apellido">
+            </div>
+        </div>
+
+        <div class="input-group">
+
+            <label>Telefono:</label>
+            <i class="fa-solid fa-phone"></i>
+            <input type="text" name="telefono" required placeholder="Ingrese su teléfono">
+        </div>
+
+        <div class="input-group">
+            <label>Email:</label>
+            <i class="fa-regular fa-envelope"></i>
+            <input type="email" name="email" required placeholder="Ingrese su email">
+        </div>
+        
+        <div class="input-group">
+
+            <label>Documento:</label>
+            <i class="fa-solid fa-passport"></i>
+            <input type="text" name="documento" required placeholder="Ingrese su documento">
+        </div>
+
+        <div class="input-group">
+
+            <label>Contraseña:</label>
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" name="password" required placeholder="Ingrese su contraseña">
+        </div>
+
+
+        
+    <button type="submit">Crear cuenta</button>
+        
     </form>
+    </div>
 
     <br>
     <a href="{{ url_for('login') }}">Volver al login</a>
+    </div>
 </body>
 </html>
