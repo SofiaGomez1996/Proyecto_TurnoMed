@@ -1,12 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import sqlite3
 import os
-
-# ─────────────────────────────────────────────
-#  INICIALIZACIÓN DE LA APP
-# ─────────────────────────────────────────────
+#configuración de la app
 app = Flask(__name__)
 app.secret_key = "clave-secreta-turnomed"
 
@@ -14,197 +12,361 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-
-# ─────────────────────────────────────────────
-#  BASE DE DATOS
-# ─────────────────────────────────────────────
 DB_PATH = "database/turnomed.db"
+UPLOAD_FOLDER = "static/imagenes/medicos"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+#base da datos
 
 def get_conn():
+    
     os.makedirs("database", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-
+def archivo_permitido(nombre_archivo):
+    return (
+        "." in nombre_archivo and
+        nombre_archivo.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    )
 def inicializar_base_de_datos():
     conn = get_conn()
     cursor = conn.cursor()
-
+#usuarios, medicos, horarios y turnos
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
-            id_usuario   INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre       TEXT    NOT NULL,
-            apellido     TEXT    NOT NULL,
-            dni          TEXT,
-            telefono     TEXT,
-            email        TEXT    UNIQUE NOT NULL,
-            password     TEXT    NOT NULL,
-            rol          TEXT    NOT NULL DEFAULT 'paciente'
+            id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            apellido TEXT NOT NULL,
+            dni TEXT,
+            telefono TEXT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            rol TEXT NOT NULL DEFAULT 'paciente'
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS medicos (
+            id_medico INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            apellido TEXT NOT NULL,
+            especialidad TEXT NOT NULL,
+            email TEXT,
+            telefono TEXT,
+            foto TEXT,
+            activo INTEGER DEFAULT 1
         )
     """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS horarios (
-            id_horario   INTEGER PRIMARY KEY AUTOINCREMENT,
-            medico       TEXT    NOT NULL,
-            especialidad TEXT    NOT NULL,
-            fecha        TEXT    NOT NULL,
-            hora         TEXT    NOT NULL,
-            ocupado      INTEGER NOT NULL DEFAULT 0
+            id_horario INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_medico INTEGER NOT NULL,
+            especialidad TEXT NOT NULL,
+            fecha TEXT NOT NULL,
+            hora TEXT NOT NULL,
+            ocupado INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (id_medico) REFERENCES medicos(id_medico)
         )
     """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS turnos (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_paciente  INTEGER NOT NULL,
-            id_horario   INTEGER NOT NULL,
-            paciente     TEXT    NOT NULL,
-            medico       TEXT    NOT NULL,
-            especialidad TEXT    NOT NULL,
-            fecha        TEXT    NOT NULL,
-            hora         TEXT    NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_paciente INTEGER NOT NULL,
+            id_horario INTEGER NOT NULL,
+            id_medico INTEGER NOT NULL,
+            paciente TEXT NOT NULL,
+            especialidad TEXT NOT NULL,
+            fecha TEXT NOT NULL,
+            hora TEXT NOT NULL,
+            estado TEXT NOT NULL DEFAULT 'Confirmado',
+            llamado INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (id_paciente) REFERENCES usuarios(id_usuario),
-            FOREIGN KEY (id_horario)  REFERENCES horarios(id_horario)
+            FOREIGN KEY (id_horario) REFERENCES horarios(id_horario),
+            FOREIGN KEY (id_medico) REFERENCES medicos(id_medico)
         )
     """)
 
     conn.commit()
     conn.close()
 
-
-def crear_admin_por_defecto():
+#datos iniciales para pruebas
+def crear_datos_iniciales():
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@turnomed.com'")
-    if not cursor.fetchone():
-        cursor.execute(
-            "INSERT INTO usuarios (nombre, apellido, email, password, rol) VALUES (?,?,?,?,?)",
-            ("Admin", "Sistema", "admin@turnomed.com", generate_password_hash("admin123"), "admin")
-        )
-        conn.commit()
-        print("Admin creado automáticamente.")
+
+    usuarios = [
+        ("Admin", "Sistema", "00000000", "1122334455", "admin@turnomed.com", generate_password_hash("admin123"), "admin"),
+        ("Juan", "Pérez", "11111111", "1133445566", "paciente@turnomed.com", generate_password_hash("paciente123"), "paciente"),
+        ("Carlos", "Gómez", "22222222", "1144556677", "medico@turnomed.com", generate_password_hash("medico123"), "medico"),
+    ]
+
+    for usuario in usuarios:
+        existe = cursor.execute(
+            "SELECT * FROM usuarios WHERE email = ?",
+            (usuario[4],)
+        ).fetchone()
+
+        if not existe:
+            cursor.execute("""
+                INSERT INTO usuarios
+                (nombre, apellido, dni, telefono, email, password, rol)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, usuario)
+
+    medicos = [
+        ("Carlos", "Gómez", "Clínica Médica", "medico@turnomed.com", "1144556677", "medico_default.png"),
+        ("Laura", "Ruiz", "Pediatría", "laura.ruiz@turnomed.com", "1166778899", "medico_default.png"),
+    ]
+
+    for medico in medicos:
+        existe = cursor.execute("""
+            SELECT * FROM medicos
+            WHERE nombre = ? AND apellido = ? AND especialidad = ?
+        """, (medico[0], medico[1], medico[2])).fetchone()
+
+        if not existe:
+            cursor.execute("""
+                INSERT INTO medicos
+                (nombre, apellido, especialidad, email, telefono, foto, activo)
+                VALUES (?, ?, ?, ?, ?, ?, 1)
+            """, medico)
+
+    conn.commit()
     conn.close()
 
 
 inicializar_base_de_datos()
-crear_admin_por_defecto()
+crear_datos_iniciales()
 
-
-# ─────────────────────────────────────────────
-#  MODELO DE USUARIO
-# ─────────────────────────────────────────────
+#user model para flask-login
 class User(UserMixin):
     def __init__(self, usuario):
-        self.id       = str(usuario["id_usuario"])
-        self.nombre   = usuario["nombre"]
+        self.id = str(usuario["id_usuario"])
+        self.nombre = usuario["nombre"]
         self.apellido = usuario["apellido"]
-        self.email    = usuario["email"]
-        self.rol      = usuario["rol"]
+        self.email = usuario["email"]
+        self.rol = usuario["rol"]
 
 
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (user_id,))
-    row = cursor.fetchone()
+    usuario = conn.execute(
+        "SELECT * FROM usuarios WHERE id_usuario = ?",
+        (user_id,)
+    ).fetchone()
     conn.close()
-    if row:
-        return User(row)
+
+    if usuario:
+        return User(usuario)
+
     return None
 
-
-# ─────────────────────────────────────────────
-#  FUNCIONES AUXILIARES DE BASE DE DATOS
-# ─────────────────────────────────────────────
+#funciones para manejar usuarios, médicos, horarios y turnos
 def buscar_usuario_por_email(email):
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE email = ?", (email,))
-    row = cursor.fetchone()
+    usuario = conn.execute(
+        "SELECT * FROM usuarios WHERE email = ?",
+        (email,)
+    ).fetchone()
     conn.close()
-    return row
+    return usuario
 
 
 def registrar_paciente(nombre, apellido, dni, telefono, email, password):
-    hashed = generate_password_hash(password)
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO usuarios (nombre, apellido, dni, telefono, email, password, rol) VALUES (?,?,?,?,?,?,'paciente')",
-        (nombre, apellido, dni, telefono, email, hashed)
-    )
+
+    cursor.execute("""
+        INSERT INTO usuarios
+        (nombre, apellido, dni, telefono, email, password, rol)
+        VALUES (?, ?, ?, ?, ?, ?, 'paciente')
+    """, (
+        nombre,
+        apellido,
+        dni,
+        telefono,
+        email.strip().lower(),
+        generate_password_hash(password)
+    ))
+
     conn.commit()
     conn.close()
 
 
-def obtener_pacientes():
+def obtener_pacientes(busqueda=None):
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE rol = 'paciente'")
-    rows = cursor.fetchall()
+
+    if busqueda:
+        termino = f"%{busqueda.strip()}%"
+
+        pacientes = conn.execute("""
+            SELECT *
+            FROM usuarios
+            WHERE rol = 'paciente'
+            AND (
+                nombre LIKE ?
+                OR apellido LIKE ?
+                OR dni LIKE ?
+                OR email LIKE ?
+                OR telefono LIKE ?
+            )
+            ORDER BY apellido, nombre
+        """, (
+            termino,
+            termino,
+            termino,
+            termino,
+            termino
+        )).fetchall()
+    else:
+        pacientes = conn.execute("""
+            SELECT *
+            FROM usuarios
+            WHERE rol = 'paciente'
+            ORDER BY apellido, nombre
+        """).fetchall()
+
     conn.close()
-    return rows
+    return pacientes
 
 
-def cargar_horario(medico, especialidad, fecha, hora):
+def obtener_medicos():
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO horarios (medico, especialidad, fecha, hora) VALUES (?,?,?,?)",
-        (medico, especialidad, fecha, hora)
-    )
-    conn.commit()
+    medicos = conn.execute("""
+        SELECT * FROM medicos
+        WHERE activo = 1
+        ORDER BY especialidad, apellido, nombre
+    """).fetchall()
     conn.close()
+    return medicos
+
+
+def obtener_especialidades():
+    conn = get_conn()
+    especialidades = conn.execute("""
+        SELECT DISTINCT especialidad
+        FROM medicos
+        WHERE activo = 1
+        ORDER BY especialidad
+    """).fetchall()
+    conn.close()
+    return especialidades
 
 
 def obtener_horarios_disponibles():
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM horarios WHERE ocupado = 0 ORDER BY fecha, hora")
-    rows = cursor.fetchall()
+    horarios = conn.execute("""
+        SELECT horarios.*, medicos.nombre, medicos.apellido
+        FROM horarios
+        INNER JOIN medicos ON horarios.id_medico = medicos.id_medico
+        WHERE horarios.ocupado = 0
+        ORDER BY horarios.fecha, horarios.hora
+    """).fetchall()
     conn.close()
-    return rows
+    return horarios
+def obtener_horarios_filtrados(especialidad=None, id_medico=None):
+    conn = get_conn()
+
+    query = """
+        SELECT
+            horarios.*,
+            medicos.nombre AS medico_nombre,
+            medicos.apellido AS medico_apellido
+        FROM horarios
+        INNER JOIN medicos
+        ON horarios.id_medico = medicos.id_medico
+        WHERE horarios.ocupado = 0
+    """
+
+    params = []
+
+    if especialidad:
+        query += " AND horarios.especialidad = ?"
+        params.append(especialidad)
+
+    if id_medico:
+        query += " AND horarios.id_medico = ?"
+        params.append(id_medico)
+
+    query += " ORDER BY horarios.fecha, horarios.hora"
+
+    horarios = conn.execute(query, params).fetchall()
+    conn.close()
+
+    return horarios
 
 
 def obtener_turnos():
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM turnos ORDER BY fecha, hora")
-    rows = cursor.fetchall()
+    turnos = conn.execute("""
+        SELECT
+            turnos.*,
+            usuarios.nombre AS paciente_nombre,
+            usuarios.apellido AS paciente_apellido,
+            medicos.nombre AS medico_nombre,
+            medicos.apellido AS medico_apellido
+        FROM turnos
+        INNER JOIN usuarios ON turnos.id_paciente = usuarios.id_usuario
+        INNER JOIN medicos ON turnos.id_medico = medicos.id_medico
+        ORDER BY turnos.fecha, turnos.hora
+    """).fetchall()
     conn.close()
-    return rows
+    return turnos
 
 
 def obtener_turnos_por_paciente(id_paciente):
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM turnos WHERE id_paciente = ? ORDER BY fecha, hora",
-        (id_paciente,)
-    )
-    rows = cursor.fetchall()
+    turnos = conn.execute("""
+        SELECT
+            turnos.*,
+            medicos.nombre AS medico_nombre,
+            medicos.apellido AS medico_apellido
+        FROM turnos
+        INNER JOIN medicos ON turnos.id_medico = medicos.id_medico
+        WHERE turnos.id_paciente = ?
+        ORDER BY turnos.fecha, turnos.hora
+    """, (id_paciente,)).fetchall()
     conn.close()
-    return rows
+    return turnos
 
 
-def obtener_turnos_por_medico(nombre_medico):
+def obtener_turnos_por_medico(id_medico):
     conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT paciente, especialidad, fecha, hora FROM turnos WHERE medico = ? ORDER BY fecha, hora",
-        (nombre_medico,)
-    )
-    rows = cursor.fetchall()
+    turnos = conn.execute("""
+        SELECT
+            turnos.*,
+            usuarios.nombre AS paciente_nombre,
+            usuarios.apellido AS paciente_apellido,
+            usuarios.telefono,
+            medicos.nombre AS medico_nombre,
+            medicos.apellido AS medico_apellido
+        FROM turnos
+        INNER JOIN usuarios ON turnos.id_paciente = usuarios.id_usuario
+        INNER JOIN medicos ON turnos.id_medico = medicos.id_medico
+        WHERE turnos.id_medico = ?
+        ORDER BY turnos.fecha, turnos.hora
+    """, (id_medico,)).fetchall()
     conn.close()
-    return rows
+    return turnos
 
 
-# ─────────────────────────────────────────────
-#  RUTAS DE AUTENTICACIÓN
-# ─────────────────────────────────────────────
+def obtener_medico_por_email(email):
+    conn = get_conn()
+    medico = conn.execute("""
+        SELECT * FROM medicos
+        WHERE email = ?
+    """, (email.strip().lower(),)).fetchone()
+    conn.close()
+    return medico
+
+#rutas de autenticación, administración, paciente y médico
 @app.route("/")
 def index():
     return redirect(url_for("login"))
@@ -213,23 +375,37 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email    = request.form["email"]
+
+        email = request.form["email"].strip().lower()
         password = request.form["password"]
 
         usuario = buscar_usuario_por_email(email)
 
-        if usuario and check_password_hash(usuario["password"], password):
-            user = User(usuario)
-            login_user(user)
+        if not usuario:
+            flash("No existe un usuario registrado con ese correo.")
+            return redirect(url_for("login"))
 
-            if user.rol == "admin":
-                return redirect(url_for("admin"))
-            elif user.rol == "paciente":
-                return redirect(url_for("paciente"))
-            elif user.rol == "medico":
-                return redirect(url_for("medico"))
+        if not check_password_hash(usuario["password"], password):
+            flash("La contraseña ingresada es incorrecta.")
+            return redirect(url_for("login"))
 
-        flash("Correo o contraseña incorrectos.")
+        user = User(usuario)
+        login_user(user)
+
+        if user.rol == "admin":
+            flash(f"Bienvenido/a {user.nombre}.")
+            return redirect(url_for("admin"))
+
+        if user.rol == "paciente":
+            flash(f"Bienvenido/a {user.nombre}.")
+            return redirect(url_for("paciente"))
+
+        if user.rol == "medico":
+            flash(f"Bienvenido/a Dr/a {user.apellido}.")
+            return redirect(url_for("medico"))
+
+        flash("El usuario no tiene un rol válido asignado.")
+        logout_user()
         return redirect(url_for("login"))
 
     return render_template("login.html")
@@ -238,15 +414,15 @@ def login():
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
-        nombre   = request.form["nombre"]
-        apellido = request.form["apellido"]
-        dni      = request.form["dni"]
-        telefono = request.form["telefono"]
-        email    = request.form["email"]
-        password = request.form["password"]
-
         try:
-            registrar_paciente(nombre, apellido, dni, telefono, email, password)
+            registrar_paciente(
+                request.form["nombre"],
+                request.form["apellido"],
+                request.form["dni"],
+                request.form["telefono"],
+                request.form["email"],
+                request.form["password"]
+            )
             flash("Registro exitoso. Ya podés iniciar sesión.")
             return redirect(url_for("login"))
         except Exception:
@@ -262,41 +438,145 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
-
-# ─────────────────────────────────────────────
-#  PANEL ADMIN
-# ─────────────────────────────────────────────
+#panel admin
 @app.route("/admin")
 @login_required
 def admin():
+
     if current_user.rol != "admin":
+        flash("No tenés permiso para ingresar al panel de administración.")
         return redirect(url_for("login"))
 
-    pacientes = obtener_pacientes()
-    horarios  = obtener_horarios_disponibles()
-    turnos    = obtener_turnos()
+    filtro_especialidad = request.args.get("especialidad", "")
+    filtro_medico = request.args.get("id_medico", "")
+    busqueda_paciente = request.args.get("buscar_paciente", "")
+
+    horarios = obtener_horarios_filtrados(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None
+    )
 
     return render_template(
         "admin.html",
-        pacientes=pacientes,
+        usuario=current_user,
+       pacientes=obtener_pacientes(busqueda_paciente),
+busqueda_paciente=busqueda_paciente,
+        medicos=obtener_medicos(),
+        especialidades=obtener_especialidades(),
         horarios=horarios,
-        turnos=turnos,
-        usuario=current_user
+        turnos=obtener_turnos(),
+        filtro_especialidad=filtro_especialidad,
+        filtro_medico=filtro_medico
     )
+
+
+@app.route("/admin/agregar_medico", methods=["POST"])
+@login_required
+def agregar_medico():
+
+    if current_user.rol != "admin":
+        flash("No tenés permiso para realizar esta acción.")
+        return redirect(url_for("login"))
+
+    nombre = request.form["nombre"]
+    apellido = request.form["apellido"]
+    especialidad = request.form["especialidad"]
+    email = request.form["email"].strip().lower()
+    telefono = request.form["telefono"]
+
+    foto_archivo = request.files.get("foto")
+    nombre_foto = "medico_default.png"
+
+    if foto_archivo and foto_archivo.filename != "":
+
+        if not archivo_permitido(foto_archivo.filename):
+            flash("Formato de imagen no permitido. Usá PNG, JPG, JPEG o WEBP.")
+            return redirect(url_for("admin"))
+
+        nombre_seguro = secure_filename(foto_archivo.filename)
+        nombre_foto = f"{email.replace('@', '_').replace('.', '_')}_{nombre_seguro}"
+        ruta_foto = os.path.join(app.config["UPLOAD_FOLDER"], nombre_foto)
+
+        foto_archivo.save(ruta_foto)
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO medicos
+            (
+                nombre,
+                apellido,
+                especialidad,
+                email,
+                telefono,
+                foto,
+                activo
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 1)
+        """, (
+            nombre,
+            apellido,
+            especialidad,
+            email,
+            telefono,
+            nombre_foto
+        ))
+
+        conn.commit()
+        flash("Médico agregado correctamente.")
+
+    except Exception:
+        flash("No se pudo agregar el médico. Verificá que el correo no esté repetido.")
+
+    conn.close()
+    return redirect(url_for("admin"))
 
 
 @app.route("/cargar_horario", methods=["POST"])
 @login_required
 def cargar_horario_route():
     if current_user.rol != "admin":
+        flash("No tenés permiso para cargar horarios.")
         return redirect(url_for("login"))
 
-    medico       = request.form["medico"]
-    especialidad = request.form["especialidad"]
-    fecha        = request.form["fecha"]
-    hora         = request.form["hora"]
+    id_medico = request.form["id_medico"]
+    fecha = request.form["fecha"]
+    hora = request.form["hora"]
 
-    cargar_horario(medico, especialidad, fecha, hora)
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    medico = cursor.execute("""
+        SELECT * FROM medicos
+        WHERE id_medico = ?
+    """, (id_medico,)).fetchone()
+
+    if not medico:
+        conn.close()
+        flash("Médico no encontrado.")
+        return redirect(url_for("admin"))
+
+    existe = cursor.execute("""
+        SELECT * FROM horarios
+        WHERE id_medico = ? AND fecha = ? AND hora = ?
+    """, (id_medico, fecha, hora)).fetchone()
+
+    if existe:
+        conn.close()
+        flash("Ese horario ya está cargado para el médico seleccionado.")
+        return redirect(url_for("admin"))
+
+    cursor.execute("""
+        INSERT INTO horarios
+        (id_medico, especialidad, fecha, hora, ocupado)
+        VALUES (?, ?, ?, ?, 0)
+    """, (id_medico, medico["especialidad"], fecha, hora))
+
+    conn.commit()
+    conn.close()
+
     flash("Horario cargado correctamente.")
     return redirect(url_for("admin"))
 
@@ -305,43 +585,63 @@ def cargar_horario_route():
 @login_required
 def asignar_turno_route():
     if current_user.rol != "admin":
+        flash("No tenés permiso para asignar turnos.")
         return redirect(url_for("login"))
 
     id_paciente = request.form["id_paciente"]
-    id_horario  = request.form["id_horario"]
+    id_horario = request.form["id_horario"]
 
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM horarios WHERE id_horario = ? AND ocupado = 0", (id_horario,))
-    horario = cursor.fetchone()
+
+    horario = cursor.execute("""
+        SELECT horarios.*, medicos.nombre, medicos.apellido
+        FROM horarios
+        INNER JOIN medicos ON horarios.id_medico = medicos.id_medico
+        WHERE horarios.id_horario = ? AND horarios.ocupado = 0
+    """, (id_horario,)).fetchone()
 
     if not horario:
         conn.close()
         flash("El horario ya está ocupado o no existe.")
         return redirect(url_for("admin"))
 
-    cursor.execute("SELECT nombre, apellido FROM usuarios WHERE id_usuario = ?", (id_paciente,))
-    paciente_row = cursor.fetchone()
+    paciente = cursor.execute("""
+        SELECT * FROM usuarios
+        WHERE id_usuario = ?
+    """, (id_paciente,)).fetchone()
 
-    if not paciente_row:
+    if not paciente:
         conn.close()
         flash("Paciente no encontrado.")
         return redirect(url_for("admin"))
 
-    nombre_paciente = f"{paciente_row['nombre']} {paciente_row['apellido']}"
+    nombre_paciente = f"{paciente['nombre']} {paciente['apellido']}"
 
-    cursor.execute(
-        """INSERT INTO turnos (id_paciente, id_horario, paciente, medico, especialidad, fecha, hora)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (id_paciente, id_horario, nombre_paciente,
-         horario["medico"], horario["especialidad"], horario["fecha"], horario["hora"])
-    )
-    cursor.execute("UPDATE horarios SET ocupado = 1 WHERE id_horario = ?", (id_horario,))
+    cursor.execute("""
+        INSERT INTO turnos
+        (id_paciente, id_horario, id_medico, paciente, especialidad, fecha, hora, estado, llamado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Confirmado', 0)
+    """, (
+        id_paciente,
+        id_horario,
+        horario["id_medico"],
+        nombre_paciente,
+        horario["especialidad"],
+        horario["fecha"],
+        horario["hora"]
+    ))
+
+    cursor.execute("""
+        UPDATE horarios
+        SET ocupado = 1
+        WHERE id_horario = ?
+    """, (id_horario,))
 
     conn.commit()
     conn.close()
 
-    flash(f"Turno asignado a {nombre_paciente} con {horario['medico']}.")
+    flash("Turno asignado correctamente.")
     return redirect(url_for("admin"))
 
 
@@ -349,61 +649,144 @@ def asignar_turno_route():
 @login_required
 def cancelar_turno(id_turno):
     if current_user.rol != "admin":
+        flash("No tenés permiso para cancelar turnos desde administración.")
         return redirect(url_for("login"))
 
     conn = get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id_horario FROM turnos WHERE id = ?", (id_turno,))
-    turno = cursor.fetchone()
+    turno = cursor.execute("""
+        SELECT * FROM turnos
+        WHERE id = ?
+    """, (id_turno,)).fetchone()
 
     if turno:
-        cursor.execute("UPDATE horarios SET ocupado = 0 WHERE id_horario = ?", (turno["id_horario"],))
-        cursor.execute("DELETE FROM turnos WHERE id = ?", (id_turno,))
+        cursor.execute("""
+            UPDATE horarios
+            SET ocupado = 0
+            WHERE id_horario = ?
+        """, (turno["id_horario"],))
+
+        cursor.execute("""
+            UPDATE turnos
+            SET estado = 'Cancelado'
+            WHERE id = ?
+        """, (id_turno,))
+
         conn.commit()
-        flash("Turno cancelado y horario liberado.")
+        flash("Turno cancelado correctamente. El horario volvió a estar disponible.")
     else:
         flash("Turno no encontrado.")
 
     conn.close()
     return redirect(url_for("admin"))
+#panel paciente
 
-
-# ─────────────────────────────────────────────
-#  PANEL PACIENTE
-# ─────────────────────────────────────────────
 @app.route("/paciente")
 @login_required
 def paciente():
     if current_user.rol != "paciente":
+        flash("No tenés permiso para ingresar a la vista paciente.")
         return redirect(url_for("login"))
-
-    turnos = obtener_turnos_por_paciente(current_user.id)
 
     return render_template(
         "paciente.html",
         usuario=current_user,
-        turnos=turnos
+        turnos=obtener_turnos_por_paciente(current_user.id)
     )
 
 
-# ─────────────────────────────────────────────
-#  PANEL MÉDICO  (sin login para testing)
-# ─────────────────────────────────────────────
+@app.route("/paciente/cancelar_turno/<int:id_turno>", methods=["POST"])
+@login_required
+def paciente_cancelar_turno(id_turno):
+    if current_user.rol != "paciente":
+        flash("No tenés permiso para cancelar este turno.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    turno = cursor.execute("""
+        SELECT * FROM turnos
+        WHERE id = ? AND id_paciente = ?
+    """, (id_turno, current_user.id)).fetchone()
+
+    if turno:
+        cursor.execute("""
+            UPDATE horarios
+            SET ocupado = 0
+            WHERE id_horario = ?
+        """, (turno["id_horario"],))
+
+        cursor.execute("""
+            UPDATE turnos
+            SET estado = 'Cancelado'
+            WHERE id = ?
+        """, (id_turno,))
+
+        conn.commit()
+        flash("Turno cancelado con éxito. Si desea solicitar otro turno debe comunicarse con la administradora.")
+    else:
+        flash("No se pudo cancelar el turno seleccionado.")
+
+    conn.close()
+    return redirect(url_for("paciente"))
+
+
 @app.route("/medico")
+@login_required
 def medico():
-    nombre_medico = "Dr. Jonathan Triñanes"
-    turnos = obtener_turnos_por_medico(nombre_medico)
+    if current_user.rol != "medico":
+        flash("No tenés permiso para ingresar a la vista médica.")
+        return redirect(url_for("login"))
+
+    medico_db = obtener_medico_por_email(current_user.email)
+
+    if not medico_db:
+        flash("No hay médico asociado a este usuario.")
+        return redirect(url_for("login"))
 
     return render_template(
         "medico.html",
-        turnos=turnos,
-        medico=nombre_medico
+        usuario=current_user,
+        medico=medico_db,
+        turnos=obtener_turnos_por_medico(medico_db["id_medico"])
     )
 
 
-# ─────────────────────────────────────────────
-#  ARRANQUE
-# ─────────────────────────────────────────────
+@app.route("/medico/llamado/<int:id_turno>", methods=["POST"])
+@login_required
+def medico_llamado(id_turno):
+    if current_user.rol != "medico":
+        flash("No tenés permiso para modificar la agenda médica.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    turno = cursor.execute("""
+        SELECT llamado
+        FROM turnos
+        WHERE id = ?
+    """, (id_turno,)).fetchone()
+
+    if turno:
+        nuevo_estado = 0 if turno["llamado"] == 1 else 1
+
+        cursor.execute("""
+            UPDATE turnos
+            SET llamado = ?
+            WHERE id = ?
+        """, (nuevo_estado, id_turno))
+
+        conn.commit()
+        flash("Estado del paciente actualizado.")
+    else:
+        flash("Turno no encontrado.")
+
+    conn.close()
+    return redirect(url_for("medico"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)

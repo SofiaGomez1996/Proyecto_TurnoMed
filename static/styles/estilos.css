@@ -90,3 +90,25 @@ body {
 
   top: 270px;
 }
+.medico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.medico-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.medico-avatar {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #2563eb;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}

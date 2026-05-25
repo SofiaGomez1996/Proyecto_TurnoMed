@@ -17,6 +17,14 @@
             <div class="login-card">
                 <h2>Iniciar sesión</h2>
 
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alerta">
+                            {{ messages[0] }}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
                 <p>
                     ¿No tienes cuenta? 
                     <a href="{{ url_for('registro') }}">Regístrate</a>
