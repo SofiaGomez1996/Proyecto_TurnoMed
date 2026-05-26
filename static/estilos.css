@@ -402,3 +402,341 @@ td form {
         grid-template-columns: 1fr;
     }
 }
+.medico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.medico-profile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.medico-avatar {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #2563eb;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+/* =========================
+   LAYOUT GENERAL
+========================= */
+
+.layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 270px;
+    background: #0D3B66;
+    color: white;
+    padding: 30px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo-box {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.sidebar-logo-box img {
+    width: 110px;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu a {
+    color: white;
+    text-decoration: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    transition: .2s;
+}
+
+.menu a:hover,
+.menu .active {
+    background: rgba(255,255,255,.12);
+}
+
+.sidebar-info {
+    margin-top: auto;
+    background: rgba(255,255,255,.08);
+    padding: 16px;
+    border-radius: 16px;
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content {
+    flex: 1;
+    padding: 40px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.page-header p {
+    margin-top: 8px;
+    color: #64748B;
+}
+
+.date-pill {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.06);
+    font-weight: 600;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.05);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #EAF2FF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.card h2 {
+    margin: 0;
+}
+
+/* =========================
+   FORMULARIOS
+========================= */
+
+.card form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.card input,
+.card select {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #D1D5DB;
+    font-size: 15px;
+}
+
+.card button {
+    background: #0D3B66;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.card button:hover {
+    opacity: .95;
+}
+
+/* =========================
+   TABLAS
+========================= */
+
+.table-card {
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table thead {
+    background: #F8FAFC;
+}
+
+table th,
+table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.table-description {
+    color: #64748B;
+    margin-top: 4px;
+}
+
+/* =========================
+   ESTADOS
+========================= */
+
+.estado {
+    background: #DCFCE7;
+    color: #166534;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.estado-cancelado {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* =========================
+   BOTONES
+========================= */
+
+.btn-danger {
+    background: #DC2626 !important;
+}
+
+.btn-danger:hover {
+    background: #B91C1C !important;
+}
+
+.btn-secondary {
+    background: #2563EB !important;
+}
+
+.btn-success {
+    background: #16A34A !important;
+}
+
+/* =========================
+   ALERTAS
+========================= */
+
+.alerta {
+    background: #DBEAFE;
+    color: #1E40AF;
+    padding: 15px 18px;
+    border-radius: 14px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.empty-state {
+    text-align: center;
+    padding: 30px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+/* =========================
+   FOTO MÉDICO
+========================= */
+
+.medico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.medico-profile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.medico-avatar {
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #2563EB;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+
+    .layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+}
