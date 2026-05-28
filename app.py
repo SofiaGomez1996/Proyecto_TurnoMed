@@ -365,7 +365,70 @@ def obtener_medico_por_email(email):
     """, (email.strip().lower(),)).fetchone()
     conn.close()
     return medico
+def obtener_usuario_por_id(id_usuario):
+    conn = get_conn()
 
+    usuario = conn.execute("""
+        SELECT *
+        FROM usuarios
+        WHERE id_usuario = ?
+    """, (id_usuario,)).fetchone()
+
+    conn.close()
+    return usuario
+
+
+def actualizar_usuario(
+    id_usuario,
+    nombre,
+    apellido,
+    dni,
+    telefono,
+    email
+):
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE usuarios
+        SET
+            nombre = ?,
+            apellido = ?,
+            dni = ?,
+            telefono = ?,
+            email = ?
+        WHERE id_usuario = ?
+    """, (
+        nombre,
+        apellido,
+        dni,
+        telefono,
+        email,
+        id_usuario
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def cambiar_password_usuario(
+    id_usuario,
+    nueva_password
+):
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE usuarios
+        SET password = ?
+        WHERE id_usuario = ?
+    """, (
+        generate_password_hash(nueva_password),
+        id_usuario
+    ))
+
+    conn.commit()
+    conn.close()
 #rutas de autenticación, administración, paciente y médico
 @app.route("/")
 def index():
@@ -459,8 +522,8 @@ def admin():
     return render_template(
         "admin.html",
         usuario=current_user,
-       pacientes=obtener_pacientes(busqueda_paciente),
-busqueda_paciente=busqueda_paciente,
+        pacientes=obtener_pacientes(busqueda_paciente),
+        busqueda_paciente=busqueda_paciente,
         medicos=obtener_medicos(),
         especialidades=obtener_especialidades(),
         horarios=horarios,
@@ -483,6 +546,7 @@ def agregar_medico():
     especialidad = request.form["especialidad"]
     email = request.form["email"].strip().lower()
     telefono = request.form["telefono"]
+    password_inicial = request.form["password"]
 
     foto_archivo = request.files.get("foto")
     nombre_foto = "medico_default.png"
@@ -503,6 +567,38 @@ def agregar_medico():
     cursor = conn.cursor()
 
     try:
+        usuario_existente = cursor.execute("""
+            SELECT *
+            FROM usuarios
+            WHERE email = ?
+        """, (email,)).fetchone()
+
+        if usuario_existente:
+            conn.close()
+            flash("Ya existe un usuario registrado con ese correo.")
+            return redirect(url_for("admin"))
+
+        cursor.execute("""
+            INSERT INTO usuarios
+            (
+                nombre,
+                apellido,
+                dni,
+                telefono,
+                email,
+                password,
+                rol
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'medico')
+        """, (
+            nombre,
+            apellido,
+            "",
+            telefono,
+            email,
+            generate_password_hash(password_inicial)
+        ))
+
         cursor.execute("""
             INSERT INTO medicos
             (
@@ -525,10 +621,10 @@ def agregar_medico():
         ))
 
         conn.commit()
-        flash("Médico agregado correctamente.")
+        flash("Médico agregado correctamente. Ya puede iniciar sesión con su email y contraseña inicial.")
 
     except Exception:
-        flash("No se pudo agregar el médico. Verificá que el correo no esté repetido.")
+        flash("No se pudo agregar el médico. Revisá los datos cargados.")
 
     conn.close()
     return redirect(url_for("admin"))
@@ -787,6 +883,137 @@ def medico_llamado(id_turno):
     conn.close()
     return redirect(url_for("medico"))
 
+
+@app.route("/medico/perfil", methods=["GET", "POST"])
+@login_required
+def perfil_medico():
+
+    if current_user.rol != "medico":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    usuario = obtener_usuario_por_id(current_user.id)
+    medico = obtener_medico_por_email(current_user.email)
+
+    if request.method == "POST":
+
+        email_nuevo = request.form["email"].strip().lower()
+
+        actualizar_usuario(
+            current_user.id,
+            request.form["nombre"],
+            request.form["apellido"],
+            "",
+            request.form["telefono"],
+            email_nuevo
+        )
+
+        conn = get_conn()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE medicos
+            SET
+                nombre = ?,
+                apellido = ?,
+                telefono = ?,
+                email = ?
+            WHERE id_medico = ?
+        """, (
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["telefono"],
+            email_nuevo,
+            medico["id_medico"]
+        ))
+
+        conn.commit()
+        conn.close()
+
+        password_actual = request.form["password_actual"]
+        nueva_password = request.form["nueva_password"]
+        confirmar_password = request.form["confirmar_password"]
+
+        if nueva_password:
+
+            if not check_password_hash(
+                usuario["password"],
+                password_actual
+            ):
+                flash("La contraseña actual es incorrecta.")
+                return redirect(url_for("perfil_medico"))
+
+            if nueva_password != confirmar_password:
+                flash("Las contraseñas nuevas no coinciden.")
+                return redirect(url_for("perfil_medico"))
+
+            cambiar_password_usuario(
+                current_user.id,
+                nueva_password
+            )
+
+        flash("Perfil actualizado correctamente.")
+        return redirect(url_for("perfil_medico"))
+
+    return render_template(
+        "perfil_medico.html",
+        usuario=usuario,
+        medico=medico
+    )
+
+
+@app.route("/paciente/perfil", methods=["GET", "POST"])
+@login_required
+def perfil_paciente():
+
+    if current_user.rol != "paciente":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    usuario = obtener_usuario_por_id(
+        int(current_user.id)
+    )
+
+    if request.method == "POST":
+
+        actualizar_usuario(
+            int(current_user.id),
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["dni"],
+            request.form["telefono"],
+            request.form["email"].strip().lower()
+        )
+
+        password_actual = request.form["password_actual"]
+        nueva_password = request.form["nueva_password"]
+        confirmar_password = request.form["confirmar_password"]
+
+        if nueva_password:
+
+            if not check_password_hash(
+                usuario["password"],
+                password_actual
+            ):
+                flash("La contraseña actual es incorrecta.")
+                return redirect(url_for("perfil_paciente"))
+
+            if nueva_password != confirmar_password:
+                flash("Las contraseñas nuevas no coinciden.")
+                return redirect(url_for("perfil_paciente"))
+
+            cambiar_password_usuario(
+                int(current_user.id),
+                nueva_password
+            )
+
+        flash("Perfil actualizado correctamente.")
+        return redirect(url_for("perfil_paciente"))
+
+    return render_template(
+        "perfil_paciente.html",
+        usuario=usuario
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

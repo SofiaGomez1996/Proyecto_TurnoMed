@@ -61,15 +61,29 @@
 
             <form method="POST" action="/admin/agregar_medico" enctype="multipart/form-data">
                 <input type="text" name="nombre" placeholder="Nombre" required>
+
                 <input type="text" name="apellido" placeholder="Apellido" required>
+
                 <input type="text" name="especialidad" placeholder="Especialidad" required>
+
                 <input type="email" name="email" placeholder="Correo electrónico" required>
+
                 <input type="text" name="telefono" placeholder="Teléfono">
 
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Contraseña inicial del médico"
+                    required
+                >
+
                 <label>Foto del médico</label>
+
                 <input type="file" name="foto" accept="image/*">
 
-                <button type="submit">+ Agregar médico</button>
+                <button type="submit">
+                    + Agregar médico
+                </button>
             </form>
         </section>
 
