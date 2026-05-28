@@ -11,28 +11,93 @@
             <h2>Solicitar Nuevo Turno</h2>
             <form action="/confirmar-turno" method="POST">
                 
-                <label>Documento del Paciente</label>
-                <input type="text" name="dni" placeholder="Ej: 12345678" required>
 
-            <label>Especialidad Médica</label>
-            <select name="especialidad" required>
-                <option value="">Seleccione una especialidad</option>
-                <option value="clinica">Clínica Médica</option>
-                <option value="pediatria">Pediatría</option>
-                <option value="traumatologia">Traumatología</option>
-                <option value="cardiologia">Cardiología</option>
-                <option value="ginecologia">Ginecología</option>
-                <option value="odontologia">Odontología</option>
-            </select>
+                <div class ="form-group">
+                    <label>Documento del Paciente</label>
+                    <input type="text" name="dni" placeholder="Ej: 12345678" required>
+                </div>
+                <div class="form-group">
+                    <label>Especialidad Médica</label>
+                    <select name="especialidad" required>
+                        <option value="">Seleccione una especialidad</option>
+                        <option value="clinica">Clínica Médica</option>
+                        <option value="pediatria">Pediatría</option>
+                        <option value="traumatologia">Traumatología</option>
+                        <option value="cardiologia">Cardiología</option>
+                        <option value="ginecologia">Ginecología</option>
+                        <option value="odontologia">Odontología</option>
+                    </select>
+                </div>
 
-            <label>Fecha</label>
-            <input type="date" name="fecha" required>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" name="fecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Horario</label>
+                </div>
 
-            <label>Horario</label>
-            <input type="time" name="horario" min="09:00" max="18:00" required>
+                <div class="horarios-grid">
+                    <input type="radio" name="horario" id="h1" value="09:00">
+                    <label for="h1">09:00</label>
 
-            <button type="submit" class="btn-primary">Reservar Turno</button>
-        </form>
+                    <input type="radio" name="horario" id="h2" value="09:30">
+                    <label for="h2">09:30</label>
+            
+                    <input type="radio" name="horario" id="h3" value="10:00">
+                    <label for="h3">10:00</label>
+
+                    <input type="radio" name="horario" id="h4" value="10:30">
+                    <label for="h4">10:30</label>
+
+                    <input type="radio" name="horario" id="h5" value="11:00">
+                    <label for="h5">11:00</label>
+
+                    <input type="radio" name="horario" id="h6" value="11:30">
+                    <label for="h6">11:30</label>
+
+                    <input type="radio" name="horario" id="h7" value="12:00">
+                    <label for="h7">12:00</label>
+
+                    <input type="radio" name="horario" id="h8" value="12:30">
+                    <label for="h8">12:30</label>
+
+                    <input type="radio" name="horario" id="h9" value="13:00">
+                    <label for="h9">13:00</label>
+
+                    <input type="radio" name="horario" id="h10" value="13:30">
+                    <label for="h10">13:30</label>
+
+                    <input type="radio" name="horario" id="h11" value="14:00">
+                    <label for="h11">14:00</label>
+
+                    <input type="radio" name="horario" id="h12" value="14:30">
+                    <label for="h12">14:30</label>
+
+                    <input type="radio" name="horario" id="h13" value="15:00">
+                    <label for="h13">15:00</label>
+
+                    <input type="radio" name="horario" id="h14" value="15:30">
+                    <label for="h14">15:30</label>
+
+                    <input type="radio" name="horario" id="h15" value="16:00">
+                    <label for="h15">16:00</label>
+
+                    <input type="radio" name="horario" id="h16" value="16:30">
+                    <label for="h16">16:30</label>
+
+                    <input type="radio" name="horario" id="h17" value="17:00">
+                    <label for="h17">17:00</label>
+
+                    <input type="radio" name="horario" id="h18" value="17:30">
+                    <label for="h18">17:30</label>
+
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">Reservar Turno</button>
+                </div>
+            </form>
         </div>
     </div>
 </body>

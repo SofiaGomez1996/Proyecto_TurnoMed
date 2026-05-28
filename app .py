@@ -194,7 +194,7 @@ def registro():
 @app.route ('/turnos')
 @login_required
 def turnos():
-    return 'Bienvenido a la pagina de turnos'
+    return render_template('turnos.html')
 
 if __name__ == '__main__':
     crear_tabla()

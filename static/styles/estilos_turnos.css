@@ -14,6 +14,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 20px; /* Espacio entre el logo y el formulario */ 
+    font-family: Inter, sans-serif;
 }
 
 .login-container {
@@ -22,7 +23,58 @@ body {
     box-sizing: border-box; /* Asegura que el padding no afecte al tamaño total */
     border-radius: 20px; /* Bordes redondeados */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
-    width: 400px; /* Ancho fijo para el formulario */
+    width: 600px; /* Ancho fijo para el formulario */
     height: auto; /* Altura fija para el formulario */
     padding: 40px; /* Espaciado interno */
+}
+
+.form-group {
+    margin-bottom: 15px; /* Espacio entre los campos del formulario */
+    
+
+}
+.form-group input, .form-group select {
+    width: 100%; /* Asegura que los campos del formulario ocupen todo el ancho disponible */
+    padding: 10px; /* Espaciado interno para los campos del formulario */
+    border: 1px solid #ccc; /* Borde gris claro */
+    border-radius: 5px; /* Bordes redondeados para los campos del formulario */
+}
+/* Ocultás el input */
+input[type="radio"] {
+  display: none;
+}
+
+/* Estilo base del label (el botón visible) */
+input[type="radio"] + label {
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Cuando está seleccionado */
+input[type="radio"]:checked + label {
+  background-color: #1B8B74;
+  color: white;
+}
+
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 columnas de igual tamaño */
+    gap: 10px; 
+    margin-top: 20px; /* Espacio superior */
+}
+
+.btn-primary {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background-color: #0D3B66;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    gap: 10px;
+    margin-top: 20px;
 }
