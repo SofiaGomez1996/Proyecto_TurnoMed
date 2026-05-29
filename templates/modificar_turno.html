@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Modificar Turno - TurnoMed</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+<div class="layout">
+    <main class="content">
+        <header class="page-header">
+            <div>
+                <h1>Modificar turno</h1>
+                <p>Seleccioná un nuevo horario para el turno seleccionado.</p>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alerta">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <div class="card-title">
+                <div class="icon-box">✏️</div>
+                <div>
+                    <h2>Turno actual</h2>
+                    <p>Paciente: {{ turno.paciente }}</p>
+                    <p>Médico: Dr/a {{ turno.id_medico }}</p>
+                    <p>Especialidad: {{ turno.especialidad }}</p>
+                    <p>Fecha: {{ turno.fecha }} - Hora: {{ turno.hora }}</p>
+                </div>
+            </div>
+
+            <form method="POST">
+                <label>Seleccionar nuevo horario (misma especialidad)</label>
+                <select name="id_horario" required>
+                    <option value="">Seleccionar horario disponible</option>
+
+                    {% for horario in horarios %}
+                        <option value="{{ horario.id_horario }}">
+                            {{ horario.fecha }} - {{ horario.hora }} | Dr/a {{ horario.medico_apellido }}, {{ horario.medico_nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div style="margin-top:12px;">
+                    <button type="submit" class="btn-secondary">Guardar cambios</button>
+                    <a href="{{ back_url }}" class="btn-link">Volver</a>
+                </div>
+            </form>
+        </section>
+
+        <footer class="footer">TurnoMed © 2026</footer>
+    </main>
+</div>
+</body>
+</html>

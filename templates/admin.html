@@ -315,13 +315,17 @@
 
                                 <td>
                                     {% if turno.estado != "Cancelado" %}
-                                        <form method="POST"
-                                              action="/cancelar_turno/{{ turno.id }}"
-                                              onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
-                                            <button type="submit" class="btn-danger">
-                                                Cancelar
-                                            </button>
-                                        </form>
+                                        <div style="display:flex;gap:8px;">
+                                            <form method="POST"
+                                                  action="/cancelar_turno/{{ turno.id }}"
+                                                  onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
+                                                <button type="submit" class="btn-danger">Cancelar</button>
+                                            </form>
+
+                                            <form method="GET" action="/admin/modificar_turno/{{ turno.id }}">
+                                                <button type="submit" class="btn-secondary">Modificar</button>
+                                            </form>
+                                        </div>
                                     {% else %}
                                         -
                                     {% endif %}

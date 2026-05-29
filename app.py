@@ -829,6 +829,150 @@ def paciente_cancelar_turno(id_turno):
     return redirect(url_for("paciente"))
 
 
+@app.route("/paciente/modificar_turno/<int:id_turno>", methods=["GET", "POST"])
+@login_required
+def paciente_modificar_turno(id_turno):
+    if current_user.rol != "paciente":
+        flash("No tenés permiso para modificar este turno.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    turno = cursor.execute("""
+        SELECT * FROM turnos
+        WHERE id = ? AND id_paciente = ?
+    """, (id_turno, current_user.id)).fetchone()
+
+    if not turno:
+        conn.close()
+        flash("Turno no encontrado.")
+        return redirect(url_for("paciente"))
+
+    if request.method == "POST":
+        nuevo_id_horario = request.form.get("id_horario")
+
+        if not nuevo_id_horario:
+            flash("Seleccioná un nuevo horario para modificar el turno.")
+            conn.close()
+            return redirect(url_for("paciente_modificar_turno", id_turno=id_turno))
+
+        nuevo = cursor.execute("SELECT * FROM horarios WHERE id_horario = ?", (nuevo_id_horario,)).fetchone()
+
+        if not nuevo or nuevo["ocupado"] == 1:
+            conn.close()
+            flash("El horario seleccionado no está disponible.")
+            return redirect(url_for("paciente_modificar_turno", id_turno=id_turno))
+
+        # liberar horario anterior
+        cursor.execute("UPDATE horarios SET ocupado = 0 WHERE id_horario = ?", (turno["id_horario"],))
+
+        # asignar nuevo horario
+        cursor.execute("UPDATE horarios SET ocupado = 1 WHERE id_horario = ?", (nuevo_id_horario,))
+
+        # actualizar turno
+        cursor.execute("""
+            UPDATE turnos
+            SET id_horario = ?, id_medico = ?, fecha = ?, hora = ?, especialidad = ?
+            WHERE id = ?
+        """, (
+            nuevo_id_horario,
+            nuevo["id_medico"],
+            nuevo["fecha"],
+            nuevo["hora"],
+            nuevo["especialidad"],
+            id_turno
+        ))
+
+        conn.commit()
+        conn.close()
+
+        flash("Turno modificado correctamente.")
+        return redirect(url_for("paciente"))
+
+    # GET: mostrar formulario con horarios disponibles de la misma especialidad
+    horarios_disponibles = obtener_horarios_filtrados(especialidad=turno["especialidad"], id_medico=None)
+    conn.close()
+
+    return render_template(
+        "modificar_turno.html",
+        usuario=current_user,
+        turno=turno,
+        horarios=horarios_disponibles,
+        back_url=url_for("paciente")
+    )
+
+
+@app.route("/admin/modificar_turno/<int:id_turno>", methods=["GET", "POST"])
+@login_required
+def admin_modificar_turno(id_turno):
+    if current_user.rol != "admin":
+        flash("No tenés permiso para ingresar al panel de administración.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    turno = cursor.execute("SELECT * FROM turnos WHERE id = ?", (id_turno,)).fetchone()
+
+    if not turno:
+        conn.close()
+        flash("Turno no encontrado.")
+        return redirect(url_for("admin"))
+
+    if request.method == "POST":
+        nuevo_id_horario = request.form.get("id_horario")
+
+        if not nuevo_id_horario:
+            flash("Seleccioná un nuevo horario para modificar el turno.")
+            conn.close()
+            return redirect(url_for("admin_modificar_turno", id_turno=id_turno))
+
+        nuevo = cursor.execute("SELECT * FROM horarios WHERE id_horario = ?", (nuevo_id_horario,)).fetchone()
+
+        if not nuevo or nuevo["ocupado"] == 1:
+            conn.close()
+            flash("El horario seleccionado no está disponible.")
+            return redirect(url_for("admin_modificar_turno", id_turno=id_turno))
+
+        # liberar horario anterior
+        cursor.execute("UPDATE horarios SET ocupado = 0 WHERE id_horario = ?", (turno["id_horario"],))
+
+        # asignar nuevo horario
+        cursor.execute("UPDATE horarios SET ocupado = 1 WHERE id_horario = ?", (nuevo_id_horario,))
+
+        # actualizar turno
+        cursor.execute("""
+            UPDATE turnos
+            SET id_horario = ?, id_medico = ?, fecha = ?, hora = ?, especialidad = ?
+            WHERE id = ?
+        """, (
+            nuevo_id_horario,
+            nuevo["id_medico"],
+            nuevo["fecha"],
+            nuevo["hora"],
+            nuevo["especialidad"],
+            id_turno
+        ))
+
+        conn.commit()
+        conn.close()
+
+        flash("Turno modificado correctamente.")
+        return redirect(url_for("admin"))
+
+    horarios_disponibles = obtener_horarios_filtrados(especialidad=turno["especialidad"], id_medico=None)
+    conn.close()
+
+    return render_template(
+        "modificar_turno.html",
+        usuario=current_user,
+        turno=turno,
+        horarios=horarios_disponibles,
+        back_url=url_for("admin")
+    )
+
+
 @app.route("/medico")
 @login_required
 def medico():
