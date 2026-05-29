@@ -84,7 +84,7 @@ def crear_tabla():
             fecha TEXT NOT NULL,
             hora TEXT NOT NULL,
             especialidad TEXT NOT NULL,
-            doctor TEXT NOT NULL,
+            doctor_id TEXT NOT NULL,
             estado TEXT NOT NULL
         )
     ''')
