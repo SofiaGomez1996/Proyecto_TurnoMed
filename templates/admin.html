@@ -18,11 +18,11 @@
 
         <nav class="menu">
             <a href="/admin" class="active">🏠 Panel</a>
-            <a href="#medicos">👨‍⚕️ Médicos</a>
+            <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
             <a href="#horarios">📅 Horarios</a>
-            <a href="#agenda-disponible">🕒 Agenda disponible</a>
+            <a href="/admin/agenda_disponible">🕒 Agenda disponible</a>
             <a href="#asignar-turno">👤 Asignar turno</a>
-            <a href="#agenda">📋 Turnos</a>
+            <a href="#agenda">📋 Turnos asignados</a>
             <a href="/logout">↪ Cerrar sesión</a>
         </nav>
 
@@ -37,7 +37,7 @@
         <header class="page-header">
             <div>
                 <h1>Panel de administración</h1>
-                <p>Gestión centralizada de horarios, pacientes y turnos.</p>
+                <p>Gestión centralizada de médicos, horarios, pacientes y turnos.</p>
             </div>
 
             <div class="date-pill">
@@ -53,38 +53,40 @@
             {% endif %}
         {% endwith %}
 
-        <section class="card" id="medicos">
-            <div class="card-title">
-                <div class="icon-box">👨‍⚕️</div>
-                <h2>Agregar médico</h2>
+        <section class="grid">
+
+            <div class="card">
+                <div class="card-title">
+                    <div class="icon-box">👨‍⚕️</div>
+                    <div>
+                        <h2>Administrar médicos</h2>
+                        <p class="table-description">
+                            Agregar, editar, cambiar foto o desactivar médicos.
+                        </p>
+                    </div>
+                </div>
+
+                <a href="/admin/medicos" class="btn-link">
+                    Ir a administrar médicos
+                </a>
             </div>
 
-            <form method="POST" action="/admin/agregar_medico" enctype="multipart/form-data">
-                <input type="text" name="nombre" placeholder="Nombre" required>
+            <div class="card">
+                <div class="card-title">
+                    <div class="icon-box">🕒</div>
+                    <div>
+                        <h2>Agenda disponible</h2>
+                        <p class="table-description">
+                            Consultar horarios disponibles por especialidad, médico y fecha.
+                        </p>
+                    </div>
+                </div>
 
-                <input type="text" name="apellido" placeholder="Apellido" required>
+                <a href="/admin/agenda_disponible" class="btn-link">
+                    Ver agenda disponible
+                </a>
+            </div>
 
-                <input type="text" name="especialidad" placeholder="Especialidad" required>
-
-                <input type="email" name="email" placeholder="Correo electrónico" required>
-
-                <input type="text" name="telefono" placeholder="Teléfono">
-
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Contraseña inicial del médico"
-                    required
-                >
-
-                <label>Foto del médico</label>
-
-                <input type="file" name="foto" accept="image/*">
-
-                <button type="submit">
-                    + Agregar médico
-                </button>
-            </form>
         </section>
 
         <section class="grid" id="horarios">
@@ -92,7 +94,7 @@
             <div class="card">
                 <div class="card-title">
                     <div class="icon-box">📅</div>
-                    <h2>Cargar horario disponible</h2>
+                    <h2>Cargar horario individual</h2>
                 </div>
 
                 <form method="POST" action="/cargar_horario">
@@ -109,44 +111,49 @@
                     <input type="date" name="fecha" required>
                     <input type="time" name="hora" required>
 
-                    <button type="submit">+ Cargar horario</button>
+                    <button type="submit">
+                        + Cargar horario
+                    </button>
                 </form>
             </div>
 
             <div class="card">
                 <div class="card-title">
-                    <div class="icon-box">🔎</div>
-                    <h2>Filtrar agenda</h2>
+                    <div class="icon-box">⏱️</div>
+                    <div>
+                        <h2>Generar horarios por franja</h2>
+                        <p class="table-description">
+                            Ejemplo: de 08:00 a 09:00 cada 10 minutos.
+                        </p>
+                    </div>
                 </div>
 
-                <form method="GET" action="/admin#agenda-disponible">
-                    <select name="especialidad">
-                        <option value="">Todas las especialidades</option>
-
-                        {% for item in especialidades %}
-                            <option value="{{ item.especialidad }}"
-                                {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
-                                {{ item.especialidad }}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    <select name="id_medico">
-                        <option value="">Todos los médicos</option>
+                <form method="POST" action="/generar_horarios">
+                    <select name="id_medico" required>
+                        <option value="">Seleccionar médico</option>
 
                         {% for medico in medicos %}
-                            <option value="{{ medico.id_medico }}"
-                                {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
+                            <option value="{{ medico.id_medico }}">
                                 Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
                             </option>
                         {% endfor %}
                     </select>
 
-                    <button type="submit">Buscar horarios</button>
+                    <input type="date" name="fecha" required>
+                    <input type="time" name="hora_inicio" required>
+                    <input type="time" name="hora_fin" required>
 
-                    <a href="/admin#agenda-disponible" class="btn-link">
-                        Limpiar filtros
-                    </a>
+                    <input
+                        type="number"
+                        name="frecuencia"
+                        min="1"
+                        placeholder="Frecuencia en minutos. Ej: 10"
+                        required
+                    >
+
+                    <button type="submit">
+                        Generar horarios disponibles
+                    </button>
                 </form>
             </div>
 
@@ -158,7 +165,7 @@
                 <div>
                     <h2>Asignar turno</h2>
                     <p class="table-description">
-                        Buscá al paciente por nombre, apellido, DNI, email o teléfono y seleccioná un horario disponible.
+                        Buscá al paciente y seleccioná un horario disponible.
                     </p>
                 </div>
             </div>
@@ -215,58 +222,12 @@
                     </button>
                 {% endif %}
             </form>
-        </section>
 
-        <section class="card table-card" id="agenda-disponible">
-            <div class="card-title">
-                <div class="icon-box">🕒</div>
-                <div>
-                    <h2>Agenda disponible</h2>
-                    <p class="table-description">
-                        Horarios disponibles según los filtros aplicados.
-                    </p>
-                </div>
-            </div>
+            <br>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Médico</th>
-                        <th>Especialidad</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% if horarios %}
-                        {% for horario in horarios %}
-                            <tr>
-                                <td>{{ horario.fecha }}</td>
-                                <td>{{ horario.hora }}</td>
-                                <td>
-                                    Dr/a {{ horario.medico_apellido }}, {{ horario.medico_nombre }}
-                                </td>
-                                <td>{{ horario.especialidad }}</td>
-                                <td>
-                                    <span class="estado">Disponible</span>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <div class="empty-icon">🕒</div>
-                                    <strong>No hay horarios disponibles.</strong>
-                                    <p>Probá con otro médico, especialidad o cargá nuevos horarios.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+            <a href="/admin/agenda_disponible" class="btn-link">
+                Ver todos los horarios disponibles
+            </a>
         </section>
 
         <section class="card table-card" id="agenda">
@@ -298,9 +259,7 @@
                         {% for turno in turnos %}
                             <tr>
                                 <td>{{ turno.paciente }}</td>
-                                <td>
-                                    Dr/a {{ turno.medico_apellido }}, {{ turno.medico_nombre }}
-                                </td>
+                                <td>Dr/a {{ turno.medico_apellido }}, {{ turno.medico_nombre }}</td>
                                 <td>{{ turno.especialidad }}</td>
                                 <td>{{ turno.fecha }}</td>
                                 <td>{{ turno.hora }}</td>
