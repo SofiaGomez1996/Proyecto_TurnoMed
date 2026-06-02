@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
 import os
+from datetime import datetime, timedelta
 #configuración de la app
 app = Flask(__name__)
 app.secret_key = "clave-secreta-turnomed"
@@ -237,16 +238,43 @@ def obtener_pacientes(busqueda=None):
     return pacientes
 
 
-def obtener_medicos():
+def obtener_medicos(busqueda=None, especialidad=None, estado="activos"):
     conn = get_conn()
-    medicos = conn.execute("""
-        SELECT * FROM medicos
-        WHERE activo = 1
-        ORDER BY especialidad, apellido, nombre
-    """).fetchall()
+
+    query = """
+        SELECT *
+        FROM medicos
+        WHERE 1 = 1
+    """
+
+    params = []
+
+    if estado == "activos":
+        query += " AND activo = 1"
+
+    elif estado == "inactivos":
+        query += " AND activo = 0"
+
+    if busqueda:
+        termino = f"%{busqueda.strip()}%"
+        query += """
+            AND (
+                nombre LIKE ?
+                OR apellido LIKE ?
+                OR email LIKE ?
+            )
+        """
+        params.extend([termino, termino, termino])
+
+    if especialidad:
+        query += " AND especialidad = ?"
+        params.append(especialidad)
+
+    query += " ORDER BY activo DESC, especialidad, apellido, nombre"
+
+    medicos = conn.execute(query, params).fetchall()
     conn.close()
     return medicos
-
 
 def obtener_especialidades():
     conn = get_conn()
@@ -271,7 +299,8 @@ def obtener_horarios_disponibles():
     """).fetchall()
     conn.close()
     return horarios
-def obtener_horarios_filtrados(especialidad=None, id_medico=None):
+
+def obtener_horarios_filtrados(especialidad=None, id_medico=None, fecha=None):
     conn = get_conn()
 
     query = """
@@ -283,6 +312,7 @@ def obtener_horarios_filtrados(especialidad=None, id_medico=None):
         INNER JOIN medicos
         ON horarios.id_medico = medicos.id_medico
         WHERE horarios.ocupado = 0
+        AND medicos.activo = 1
     """
 
     params = []
@@ -295,13 +325,109 @@ def obtener_horarios_filtrados(especialidad=None, id_medico=None):
         query += " AND horarios.id_medico = ?"
         params.append(id_medico)
 
+    if fecha:
+        query += " AND horarios.fecha = ?"
+        params.append(fecha)
+
     query += " ORDER BY horarios.fecha, horarios.hora"
 
     horarios = conn.execute(query, params).fetchall()
     conn.close()
-
     return horarios
 
+def obtener_fechas_disponibles(especialidad=None, id_medico=None):
+    conn = get_conn()
+
+    query = """
+        SELECT DISTINCT horarios.fecha
+        FROM horarios
+        INNER JOIN medicos
+        ON horarios.id_medico = medicos.id_medico
+        WHERE horarios.ocupado = 0
+        AND medicos.activo = 1
+    """
+
+    params = []
+
+    if especialidad:
+        query += " AND horarios.especialidad = ?"
+        params.append(especialidad)
+
+    if id_medico:
+        query += " AND horarios.id_medico = ?"
+        params.append(id_medico)
+
+    query += " ORDER BY horarios.fecha"
+
+    fechas = conn.execute(query, params).fetchall()
+    conn.close()
+    return fechas
+
+def generar_horarios_automaticos(id_medico, fecha, hora_inicio, hora_fin, frecuencia):
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    medico = cursor.execute("""
+        SELECT *
+        FROM medicos
+        WHERE id_medico = ?
+        AND activo = 1
+    """, (id_medico,)).fetchone()
+
+    if not medico:
+        conn.close()
+        return 0, "Médico no encontrado o inactivo."
+
+    try:
+        inicio = datetime.strptime(hora_inicio, "%H:%M")
+        fin = datetime.strptime(hora_fin, "%H:%M")
+        frecuencia = int(frecuencia)
+    except ValueError:
+        conn.close()
+        return 0, "Datos de horario inválidos."
+
+    if frecuencia <= 0:
+        conn.close()
+        return 0, "La frecuencia debe ser mayor a 0."
+
+    if inicio > fin:
+        conn.close()
+        return 0, "La hora de inicio no puede ser mayor a la hora de fin."
+
+    cantidad_generada = 0
+    hora_actual = inicio
+
+    while hora_actual <= fin:
+        hora_texto = hora_actual.strftime("%H:%M")
+
+        existe = cursor.execute("""
+            SELECT *
+            FROM horarios
+            WHERE id_medico = ?
+            AND fecha = ?
+            AND hora = ?
+        """, (id_medico, fecha, hora_texto)).fetchone()
+
+        if not existe:
+            cursor.execute("""
+                INSERT INTO horarios
+                (id_medico, especialidad, fecha, hora, ocupado)
+                VALUES (?, ?, ?, ?, 0)
+            """, (
+                id_medico,
+                medico["especialidad"],
+                fecha,
+                hora_texto
+            ))
+
+            cantidad_generada += 1
+
+        hora_actual += timedelta(minutes=frecuencia)
+
+    conn.commit()
+    conn.close()
+
+    return cantidad_generada, "Horarios generados correctamente."
 
 def obtener_turnos():
     conn = get_conn()
@@ -1013,6 +1139,254 @@ def perfil_paciente():
     return render_template(
         "perfil_paciente.html",
         usuario=usuario
+    )
+@app.route("/generar_horarios", methods=["POST"])
+@login_required
+def generar_horarios_route():
+
+    if current_user.rol != "admin":
+        flash("No tenés permiso para generar horarios.")
+        return redirect(url_for("login"))
+
+    id_medico = request.form["id_medico"]
+    fecha = request.form["fecha"]
+    hora_inicio = request.form["hora_inicio"]
+    hora_fin = request.form["hora_fin"]
+    frecuencia = request.form["frecuencia"]
+
+    cantidad, mensaje = generar_horarios_automaticos(
+        id_medico,
+        fecha,
+        hora_inicio,
+        hora_fin,
+        frecuencia
+    )
+
+    if cantidad > 0:
+        flash(f"{mensaje} Se generaron {cantidad} turnos disponibles.")
+    else:
+        flash(mensaje)
+
+    return redirect(url_for("admin") + "#agenda-disponible")
+
+
+@app.route("/admin/desactivar_medico/<int:id_medico>", methods=["POST"])
+@login_required
+def desactivar_medico(id_medico):
+
+    if current_user.rol != "admin":
+        flash("No tenés permiso para realizar esta acción.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    medico = cursor.execute("""
+        SELECT *
+        FROM medicos
+        WHERE id_medico = ?
+    """, (id_medico,)).fetchone()
+
+    if not medico:
+        conn.close()
+        flash("Médico no encontrado.")
+        return redirect(url_for("admin"))
+
+    cursor.execute("""
+        UPDATE medicos
+        SET activo = 0
+        WHERE id_medico = ?
+    """, (id_medico,))
+
+    cursor.execute("""
+        UPDATE horarios
+        SET ocupado = 1
+        WHERE id_medico = ?
+        AND ocupado = 0
+    """, (id_medico,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Médico desactivado correctamente. Ya no aparecerá para cargar ni asignar nuevos turnos.")
+    return redirect(url_for("admin") + "#medicos")
+
+@app.route("/admin/medicos")
+@login_required
+def admin_medicos():
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    busqueda = request.args.get("busqueda", "")
+    especialidad = request.args.get("especialidad", "")
+    estado = request.args.get("estado", "activos")
+
+    return render_template(
+        "admin_medicos.html",
+        medicos=obtener_medicos(
+            busqueda if busqueda else None,
+            especialidad if especialidad else None,
+            estado
+        ),
+        especialidades=obtener_especialidades(),
+        busqueda=busqueda,
+        filtro_especialidad=especialidad,
+        filtro_estado=estado
+    )
+@app.route("/admin/medicos/editar/<int:id_medico>", methods=["POST"])
+@login_required
+def editar_medico(id_medico):
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    nombre = request.form["nombre"]
+    apellido = request.form["apellido"]
+    especialidad = request.form["especialidad"]
+    email = request.form["email"].strip().lower()
+    telefono = request.form["telefono"]
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    medico = cursor.execute("""
+        SELECT *
+        FROM medicos
+        WHERE id_medico = ?
+    """, (id_medico,)).fetchone()
+
+    if not medico:
+        conn.close()
+        flash("Médico no encontrado.")
+        return redirect(url_for("admin_medicos"))
+
+    nombre_foto = medico["foto"]
+
+    foto_archivo = request.files.get("foto")
+
+    if foto_archivo and foto_archivo.filename != "":
+        if not archivo_permitido(foto_archivo.filename):
+            conn.close()
+            flash("Formato de imagen no permitido. Usá PNG, JPG, JPEG o WEBP.")
+            return redirect(url_for("admin_medicos"))
+
+        nombre_seguro = secure_filename(foto_archivo.filename)
+        nombre_foto = f"{email.replace('@', '_').replace('.', '_')}_{nombre_seguro}"
+        ruta_foto = os.path.join(app.config["UPLOAD_FOLDER"], nombre_foto)
+        foto_archivo.save(ruta_foto)
+
+    try:
+        cursor.execute("""
+            UPDATE medicos
+            SET
+                nombre = ?,
+                apellido = ?,
+                especialidad = ?,
+                email = ?,
+                telefono = ?,
+                foto = ?
+            WHERE id_medico = ?
+        """, (
+            nombre,
+            apellido,
+            especialidad,
+            email,
+            telefono,
+            nombre_foto,
+            id_medico
+        ))
+
+        cursor.execute("""
+            UPDATE usuarios
+            SET
+                nombre = ?,
+                apellido = ?,
+                telefono = ?,
+                email = ?
+            WHERE email = ?
+            AND rol = 'medico'
+        """, (
+            nombre,
+            apellido,
+            telefono,
+            email,
+            medico["email"]
+        ))
+
+        conn.commit()
+        flash("Datos del médico actualizados correctamente.")
+
+    except Exception:
+        flash("No se pudo actualizar el médico. Verificá que el correo no esté repetido.")
+
+    conn.close()
+    return redirect(url_for("admin_medicos"))
+@app.route("/admin/activar_medico/<int:id_medico>", methods=["POST"])
+@login_required
+def activar_medico(id_medico):
+
+    if current_user.rol != "admin":
+        flash("No tenés permiso para realizar esta acción.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    medico = cursor.execute("""
+        SELECT *
+        FROM medicos
+        WHERE id_medico = ?
+    """, (id_medico,)).fetchone()
+
+    if not medico:
+        conn.close()
+        flash("Médico no encontrado.")
+        return redirect(url_for("admin_medicos"))
+
+    cursor.execute("""
+        UPDATE medicos
+        SET activo = 1
+        WHERE id_medico = ?
+    """, (id_medico,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Médico activado correctamente. Ya puede volver a recibir horarios y turnos.")
+    return redirect(url_for("admin_medicos"))
+
+@app.route("/admin/agenda_disponible")
+@login_required
+def admin_agenda_disponible():
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    filtro_especialidad = request.args.get("especialidad", "")
+    filtro_medico = request.args.get("id_medico", "")
+    filtro_fecha = request.args.get("fecha", "")
+
+    fechas_disponibles = obtener_fechas_disponibles(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None
+    )
+
+    horarios = obtener_horarios_filtrados(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None,
+        filtro_fecha if filtro_fecha else None
+    )
+
+    return render_template(
+        "agenda_disponible.html",
+        horarios=horarios,
+        fechas_disponibles=fechas_disponibles,
+        medicos=obtener_medicos(),
+        especialidades=obtener_especialidades(),
+        filtro_especialidad=filtro_especialidad,
+        filtro_medico=filtro_medico,
+        filtro_fecha=filtro_fecha
     )
 
 if __name__ == "__main__":
