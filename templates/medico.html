@@ -94,9 +94,18 @@
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">
-                    {{ messages[0] }}
-                </div>
+                {% set m = messages[0] %}
+                {% if (m[:2]|lower) == 'no' %}
+                    <div class="flash flash-error">
+                        <div class="flash-icon">⚠️</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% else %}
+                    <div class="flash flash-success">
+                        <div class="flash-icon">✅</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% endif %}
             {% endif %}
         {% endwith %}
 
@@ -193,9 +202,7 @@
                                         method="POST"
                                         action="/medico/llamado/{{ turno.id }}">
 
-                                        <button
-                                            type="submit"
-                                            class="{% if turno.llamado == 1 %}btn-success{% else %}btn-secondary{% endif %}">
+                                        <button type="submit" class="btn {% if turno.llamado == 1 %}btn-success{% else %}btn-secondary{% endif %}">
 
                                             {% if turno.llamado == 1 %}
                                                 ✓ Llamado

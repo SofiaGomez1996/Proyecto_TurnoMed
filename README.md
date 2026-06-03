@@ -44,9 +44,12 @@ Mac/Linux:
 
 source venv/bin/activate
 4. Instalar dependencias
-pip install flask
+pip install -r requirements.txt
+
 ▶️ Ejecutar el proyecto
 python app.py
+
+Si instalaste `pywebview`, la app se abre en una ventana de escritorio; de lo contrario se ejecuta en el navegador.
 
 Abrir en navegador:
 

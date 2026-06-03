@@ -4,6 +4,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
 import os
+import threading
+
+try:
+    import webview
+except ImportError:
+    webview = None
 #configuración de la app
 app = Flask(__name__)
 app.secret_key = "clave-secreta-turnomed"

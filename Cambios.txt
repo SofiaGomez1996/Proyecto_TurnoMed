@@ -1,0 +1,48 @@
+Fecha: 03-06-2026
+Autor: Cambios aplicados por asistente
+Proyecto: Turno Med Moficado 3-6-2026
+
+Resumen de cambios:
+
+1) Hoja de estilos principal
+   - Archivo: static/estilos.css
+   - Añadidos:
+     * Clases para mensajes flash: .flash, .flash-success, .flash-error, .flash-info
+     * Sistema de botones unificado: .btn, .btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-link
+     * Badges de estado mejorados: .estado, .estado-disponible, .estado-cancelado
+     * Ajustes visuales en tarjetas y títulos, tamaños de iconos y avatars (.medico-avatar)
+
+2) Plantillas (sin tocar lógica ni rutas)
+   - templates/admin.html
+     * Unificación de mensajes flash (uso de .flash y iconos)
+     * Botones con clases .btn y variantes (.btn-primary, .btn-success, .btn-danger)
+     * Badge "Disponible" ahora usa .estado-disponible
+   - templates/paciente.html
+     * Mensajes flash unificados
+     * Botones de acción (Cancelar/Modificar) ahora usan clases .btn
+   - templates/medico.html
+     * Mensajes flash unificados
+     * Botón de llamado usa clases .btn y .btn-success/.btn-secondary según estado
+   - templates/perfil_paciente.html
+     * Mensajes flash unificados
+     * Botón "Guardar cambios" usa .btn .btn-primary
+   - templates/perfil_medico.html
+     * Mensajes flash unificados
+     * Botón "Guardar cambios" usa .btn .btn-primary
+
+3) Verificación
+   - Se inició el servidor local y se comprobó la vista de administración en http://127.0.0.1:5000
+   - Credenciales de prueba incluidas en la base de datos de desarrollo:
+     * admin@turnomed.com / admin123
+     * paciente@turnomed.com / paciente123
+     * medico@turnomed.com / medico123
+
+4) Copia del proyecto
+   - Directorio destino: C:\Users\aleja\Downloads\Turno Med Moficado 3-6-2026
+   - La copia incluye todos los archivos y el virtualenv (si estaba presente)
+
+Notas importantes:
+- No se modificó ninguna ruta ni nombre de formulario; únicamente cambios estéticos en CSS y plantillas.
+- Si querés que genere un .zip del proyecto o haga commit en git dentro de la carpeta nueva, avisame y lo hago.
+
+Fin del registro.

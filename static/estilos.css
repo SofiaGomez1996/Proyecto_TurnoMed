@@ -368,6 +368,72 @@ td form {
     font-weight: 600;
 }
 
+/* Flash messages (success / error / info) */
+.flash {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+.flash-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+.flash-success { background: #ecfdf5; color: #065f46; }
+.flash-success .flash-icon { background: #bbf7d0; color: #065f46; }
+.flash-error { background: #fff1f2; color: #7f1d1d; }
+.flash-error .flash-icon { background: #fecaca; color: #7f1d1d; }
+.flash-info { background: #eff6ff; color: #1e3a8a; }
+.flash-info .flash-icon { background: #dbeafe; color: #1e3a8a; }
+
+/* Unified buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: #eef2ff; color: #3730a3; border: 1px solid #e0e7ff; }
+.btn-secondary:hover { background: #e6ecff; }
+.btn-success { background: #10b981; color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-outline { background: transparent; color: #2563eb; border: 1px solid #c7ddff; }
+.btn-link { background: transparent; color: #2563eb; text-decoration: underline; padding: 0; height: auto; }
+.btn[disabled], .btn.disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Status badges */
+.estado { background: #ecfdf5; color: #065f46; padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+.estado-cancelado { background: #fff1f2; color: #7f1d1d; padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+.estado-disponible { background: #eff6ff; color: #1e3a8a; padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+
+/* Card titles and spacing */
+.card h2 { font-size: 20px; margin: 0; }
+.card p.table-description { margin: 4px 0 0; color: #64748b; }
+.card { padding: 26px; }
+.card-title .icon-box { width: 52px; height: 52px; border-radius: 12px; font-size: 20px; }
+
+/* Avatars */
+.medico-avatar { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 2px solid #e6eefc; }
+
+
 .footer {
     text-align: center;
     color: #475569;

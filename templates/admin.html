@@ -47,9 +47,18 @@
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">
-                    {{ messages[0] }}
-                </div>
+                {% set m = messages[0] %}
+                {% if (m[:2]|lower) == 'no' %}
+                    <div class="flash flash-error">
+                        <div class="flash-icon">⚠️</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% else %}
+                    <div class="flash flash-success">
+                        <div class="flash-icon">✅</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% endif %}
             {% endif %}
         {% endwith %}
 
@@ -81,7 +90,7 @@
 
                 <input type="file" name="foto" accept="image/*">
 
-                <button type="submit">
+                <button type="submit" class="btn btn-primary">
                     + Agregar médico
                 </button>
             </form>
@@ -109,7 +118,7 @@
                     <input type="date" name="fecha" required>
                     <input type="time" name="hora" required>
 
-                    <button type="submit">+ Cargar horario</button>
+                    <button type="submit" class="btn btn-primary">+ Cargar horario</button>
                 </form>
             </div>
 
@@ -142,11 +151,9 @@
                         {% endfor %}
                     </select>
 
-                    <button type="submit">Buscar horarios</button>
+                    <button type="submit" class="btn btn-primary">Buscar horarios</button>
 
-                    <a href="/admin#agenda-disponible" class="btn-link">
-                        Limpiar filtros
-                    </a>
+                    <a href="/admin#agenda-disponible" class="btn-link">Limpiar filtros</a>
                 </form>
             </div>
 
@@ -171,9 +178,7 @@
                     value="{{ busqueda_paciente }}"
                 >
 
-                <button type="submit">
-                    Buscar paciente
-                </button>
+                <button type="submit" class="btn btn-primary">Buscar paciente</button>
 
                 <a href="/admin#asignar-turno" class="btn-link">
                     Limpiar búsqueda
@@ -206,11 +211,11 @@
                 </select>
 
                 {% if pacientes and horarios %}
-                    <button type="submit" class="btn-secondary">
+                    <button type="submit" class="btn btn-success">
                         ✓ Asignar turno
                     </button>
                 {% else %}
-                    <button type="button" class="btn-danger" disabled>
+                    <button type="button" class="btn btn-danger" disabled>
                         No hay pacientes u horarios disponibles
                     </button>
                 {% endif %}
@@ -250,8 +255,8 @@
                                 </td>
                                 <td>{{ horario.especialidad }}</td>
                                 <td>
-                                    <span class="estado">Disponible</span>
-                                </td>
+                                        <span class="estado-disponible">Disponible</span>
+                                    </td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -319,11 +324,11 @@
                                             <form method="POST"
                                                   action="/cancelar_turno/{{ turno.id }}"
                                                   onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
-                                                <button type="submit" class="btn-danger">Cancelar</button>
+                                                <button type="submit" class="btn btn-danger">Cancelar</button>
                                             </form>
 
                                             <form method="GET" action="/admin/modificar_turno/{{ turno.id }}">
-                                                <button type="submit" class="btn-secondary">Modificar</button>
+                                                <button type="submit" class="btn btn-secondary">Modificar</button>
                                             </form>
                                         </div>
                                     {% else %}

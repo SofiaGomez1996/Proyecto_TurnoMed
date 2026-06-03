@@ -43,7 +43,18 @@
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">{{ messages[0] }}</div>
+                {% set m = messages[0] %}
+                {% if (m[:2]|lower) == 'no' %}
+                    <div class="flash flash-error">
+                        <div class="flash-icon">⚠️</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% else %}
+                    <div class="flash flash-success">
+                        <div class="flash-icon">✅</div>
+                        <div>{{ m }}</div>
+                    </div>
+                {% endif %}
             {% endif %}
         {% endwith %}
 
@@ -75,9 +86,7 @@
 
                 <input type="password" name="confirmar_password" placeholder="Confirmar nueva contraseña">
 
-                <button type="submit">
-                    Guardar cambios
-                </button>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
 
             </form>
         </section>
