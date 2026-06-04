@@ -44,7 +44,7 @@
 
         <div class="sidebar-info">
             <strong>Paciente</strong>
-            <p>Consulta de turnos asignados</p>
+            <p>Consulta y solicitud de turnos</p>
         </div>
 
     </aside>
@@ -61,7 +61,7 @@
                 <p>
                     Hola,
                     {{ usuario.nombre }}.
-                    Acá podés consultar tus turnos asignados.
+                    Acá podés consultar y solicitar tus turnos.
                 </p>
             </div>
 
@@ -79,6 +79,7 @@
             {% endif %}
         {% endwith %}
 
+        <!-- TURNOS ASIGNADOS -->
         <section class="card table-card">
 
             <div class="card-title">
@@ -205,8 +206,8 @@
                                 </strong>
 
                                 <p>
-                                    Cuando la administradora te asigne
-                                    un turno, aparecerá en esta sección.
+                                    Cuando solicites un turno,
+                                    aparecerá en esta sección.
                                 </p>
 
                             </div>
@@ -223,7 +224,8 @@
 
         </section>
 
-        <section class="card" id="solicitud">
+        <!-- SOLICITAR TURNO -->
+        <section class="card table-card" id="solicitud">
 
             <div class="card-title">
 
@@ -234,23 +236,128 @@
                 <div>
 
                     <h2>
-                        Solicitud de turno
+                        Solicitar turno
                     </h2>
 
                     <p class="table-description">
-                        Los pacientes no reservan turnos directamente.
+                        Filtrá por especialidad o médico y elegí el horario que más te convenga.
                     </p>
 
                 </div>
 
             </div>
 
-            <p>
-                Para solicitar un turno,
-                comunicate con la administradora del consultorio.
-                Ella verificará la disponibilidad
-                y asignará el horario correspondiente.
-            </p>
+            <!-- Filtros -->
+            <form method="GET" action="{{ url_for('paciente') }}" class="filtros-form">
+
+                <div class="filtros-grupo">
+
+                    <label for="especialidad">Especialidad:</label>
+                    <select name="especialidad" id="especialidad" onchange="this.form.submit()">
+                        <option value="">Todas</option>
+                        {% for esp in especialidades %}
+                            <option value="{{ esp['especialidad'] }}"
+                                {% if filtro_especialidad == esp['especialidad'] %}selected{% endif %}>
+                                {{ esp['especialidad'] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="id_medico">Médico:</label>
+                    <select name="id_medico" id="id_medico" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        {% for m in medicos %}
+                            <option value="{{ m['id_medico'] }}"
+                                {% if filtro_medico == m['id_medico']|string %}selected{% endif %}>
+                                Dr/a {{ m['apellido'] }}, {{ m['nombre'] }} — {{ m['especialidad'] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                </div>
+
+            </form>
+
+            <!-- Listado de horarios disponibles -->
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Especialidad</th>
+                        <th>Médico</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% if horarios_disponibles %}
+
+                    {% for h in horarios_disponibles %}
+
+                        <tr>
+
+                            <td>{{ h['especialidad'] }}</td>
+
+                            <td>Dr/a {{ h['medico_apellido'] }}, {{ h['medico_nombre'] }}</td>
+
+                            <td>{{ h['fecha'] }}</td>
+
+                            <td>{{ h['hora'] }}</td>
+
+                            <td>
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('paciente_sacar_turno') }}"
+                                    onsubmit="return confirm('¿Confirmás que querés solicitar el turno del {{ h['fecha'] }} a las {{ h['hora'] }} con Dr/a {{ h['medico_apellido'] }}?');">
+
+                                    <input type="hidden" name="id_horario" value="{{ h['id_horario'] }}">
+
+                                    <button type="submit" class="btn-primary">
+                                        Solicitar turno
+                                    </button>
+
+                                </form>
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td colspan="5">
+
+                            <div class="empty-state">
+
+                                <div class="empty-icon">
+                                    🔍
+                                </div>
+
+                                <strong>
+                                    No hay turnos disponibles.
+                                </strong>
+
+                                <p>
+                                    Probá cambiando los filtros
+                                    o volvé a consultar más tarde.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
 
         </section>
 

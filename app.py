@@ -785,13 +785,24 @@ def paciente():
         flash("No tenés permiso para ingresar a la vista paciente.")
         return redirect(url_for("login"))
 
+    filtro_especialidad = request.args.get("especialidad", "")
+    filtro_medico = request.args.get("id_medico", "")
+
+    horarios_disponibles = obtener_horarios_filtrados(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None
+    )
+
     return render_template(
         "paciente.html",
         usuario=current_user,
-        turnos=obtener_turnos_por_paciente(current_user.id)
+        turnos=obtener_turnos_por_paciente(current_user.id),
+        horarios_disponibles=horarios_disponibles,
+        especialidades=obtener_especialidades(),
+        medicos=obtener_medicos(),
+        filtro_especialidad=filtro_especialidad,
+        filtro_medico=filtro_medico
     )
-
-
 @app.route("/paciente/cancelar_turno/<int:id_turno>", methods=["POST"])
 @login_required
 def paciente_cancelar_turno(id_turno):
@@ -828,6 +839,75 @@ def paciente_cancelar_turno(id_turno):
     conn.close()
     return redirect(url_for("paciente"))
 
+@app.route("/paciente/sacar_turno", methods=["POST"])
+@login_required
+def paciente_sacar_turno():
+    if current_user.rol != "paciente":
+        flash("No tenés permiso para solicitar turnos.")
+        return redirect(url_for("login"))
+
+    id_horario = request.form.get("id_horario")
+
+    if not id_horario:
+        flash("No se seleccionó un horario válido.")
+        return redirect(url_for("paciente"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    # Verificar que el horario existe y está libre
+    horario = cursor.execute("""
+        SELECT horarios.*, medicos.nombre AS medico_nombre, medicos.apellido AS medico_apellido
+        FROM horarios
+        INNER JOIN medicos ON horarios.id_medico = medicos.id_medico
+        WHERE horarios.id_horario = ? AND horarios.ocupado = 0
+    """, (id_horario,)).fetchone()
+
+    if not horario:
+        conn.close()
+        flash("El turno ya no está disponible. Intentá con otro.")
+        return redirect(url_for("paciente"))
+
+    # Verificar que el paciente no tenga ya un turno confirmado con ese médico en esa fecha
+    turno_existente = cursor.execute("""
+        SELECT * FROM turnos
+        WHERE id_paciente = ? AND id_medico = ? AND fecha = ? AND estado = 'Confirmado'
+    """, (current_user.id, horario["id_medico"], horario["fecha"])).fetchone()
+
+    if turno_existente:
+        conn.close()
+        flash("Ya tenés un turno confirmado con ese médico en esa fecha.")
+        return redirect(url_for("paciente"))
+
+    paciente = cursor.execute("""
+        SELECT * FROM usuarios WHERE id_usuario = ?
+    """, (current_user.id,)).fetchone()
+
+    nombre_paciente = f"{paciente['nombre']} {paciente['apellido']}"
+
+    cursor.execute("""
+        INSERT INTO turnos
+        (id_paciente, id_horario, id_medico, paciente, especialidad, fecha, hora, estado, llamado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Confirmado', 0)
+    """, (
+        current_user.id,
+        id_horario,
+        horario["id_medico"],
+        nombre_paciente,
+        horario["especialidad"],
+        horario["fecha"],
+        horario["hora"]
+    ))
+
+    cursor.execute("""
+        UPDATE horarios SET ocupado = 1 WHERE id_horario = ?
+    """, (id_horario,))
+
+    conn.commit()
+    conn.close()
+
+    flash(f"Turno solicitado correctamente para el {horario['fecha']} a las {horario['hora']} con el Dr/a {horario['medico_apellido']}.")
+    return redirect(url_for("paciente"))
 
 @app.route("/medico")
 @login_required
