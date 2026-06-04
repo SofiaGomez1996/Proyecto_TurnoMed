@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda disponible - TurnoMed</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo-box">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="TurnoMed">
+        </div>
+
+        <h2>TurnoMed</h2>
+
+        <nav class="menu">
+            <a href="/admin">🏠 Panel</a>
+            <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
+            <a href="/admin/agenda_disponible" class="active">🕒 Agenda disponible</a>
+            <a href="/logout">↪ Cerrar sesión</a>
+        </nav>
+
+        <div class="sidebar-info">
+            <strong>Administradora</strong>
+            <p>Consulta de horarios disponibles</p>
+        </div>
+    </aside>
+
+    <main class="content">
+
+        <header class="page-header">
+            <div>
+                <h1>Agenda disponible</h1>
+                <p>Primero filtrá por especialidad o médico, luego seleccioná una fecha disponible.</p>
+            </div>
+
+            <div class="date-pill">
+                🕒 Disponibilidad
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alerta">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <div class="card-title">
+                <div class="icon-box">🔎</div>
+                <div>
+                    <h2>Filtrar disponibilidad</h2>
+                    <p class="table-description">
+                        Elegí especialidad y/o médico. El sistema mostrará solo las fechas con horarios disponibles.
+                    </p>
+                </div>
+            </div>
+
+            <form method="GET" action="/admin/agenda_disponible">
+
+                <select name="especialidad">
+                    <option value="">Todas las especialidades</option>
+
+                    {% for item in especialidades %}
+                        <option value="{{ item.especialidad }}"
+                            {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
+                            {{ item.especialidad }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select name="id_medico">
+                    <option value="">Todos los médicos</option>
+
+                    {% for medico in medicos %}
+                        <option value="{{ medico.id_medico }}"
+                            {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
+                            Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select name="fecha">
+                    <option value="">Todas las fechas disponibles</option>
+
+                    {% for item in fechas_disponibles %}
+                        <option value="{{ item.fecha }}"
+                            {% if filtro_fecha == item.fecha %}selected{% endif %}>
+                            {{ item.fecha }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit">
+                    Buscar horarios
+                </button>
+
+                <a href="/admin/agenda_disponible" class="btn-link">
+                    Limpiar filtros
+                </a>
+
+            </form>
+        </section>
+
+        <section class="card table-card">
+            <div class="card-title">
+                <div class="icon-box">📅</div>
+                <div>
+                    <h2>Turnos disponibles</h2>
+                    <p class="table-description">
+                        Horarios disponibles según los filtros seleccionados.
+                    </p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Médico</th>
+                        <th>Especialidad</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% if horarios %}
+                        {% for horario in horarios %}
+                            <tr>
+                                <td>{{ horario.fecha }}</td>
+                                <td>{{ horario.hora }}</td>
+                                <td>
+                                    Dr/a {{ horario.medico_apellido }}, {{ horario.medico_nombre }}
+                                </td>
+                                <td>{{ horario.especialidad }}</td>
+                                <td>
+                                    <span class="estado">Disponible</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🕒</div>
+                                    <strong>No hay horarios disponibles.</strong>
+                                    <p>
+                                        Probá con otro médico, especialidad o generá nuevos horarios desde el panel.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="footer">
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>
