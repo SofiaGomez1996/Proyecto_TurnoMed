@@ -1,100 +1,68 @@
-# 🏥 TurnoMed
+# TurnoMed :hospital:
 
-Sistema web de gestión de turnos médicos para consultorios pequeños.
+Sistema web de gestion de turnos medicos para consultorios pequeños
+## Descripcion
 
----
+TurnoMed es una aplicacion desarrollada en Python que busca facilitar el gestionar turnos medicos para todo aquel que lo vaya a utilizar.
+Este sistema esta pensado para un consultorio pequeño donde:
 
-## 📌 Descripción
+- La administradora (recepcionista) otorga una lista de turnos
+- El paciente solo consulta o solicita
+- El medico solo visualiza su agenda
+## Tecnologias
 
-TurnoMed es una aplicación desarrollada en Python que permite gestionar turnos médicos de forma simple.
+**Cliente (Frontend):** HTML5 / CSS3 / Bootstrap / JavaScript
 
-El sistema está pensado para un consultorio pequeño donde:
+**Servidor (Backend):** Python3 / Flask / SQlite
 
-- La administradora (recepcionista) otorga los turnos  
-- El paciente solo consulta o solicita  
-- El médico solo visualiza su agenda  
 
----
-
-## 🧠 Tecnologías
-
-- Python 3  
-- Flask  
-- SQLite  
-- HTML / CSS / Bootstrap  
-
----
-
-## ⚙️ Instalación
-
-### 1. Clonar el repositorio
+## Instalacion
 
 ```bash
-git clone https://github.com/tu-repo/turnomed.git
-cd turnomed
-2. Crear entorno virtual
-python -m venv venv
-3. Activar entorno
+  1. Clona el repositorio git clone:  https://github.com/tu-repo/turnomed.git
 
-Windows:
+  2. Crea entorno virtual python -m venv venv
+  
+  3. Activar entorno
 
-venv\Scripts\activate
+  Windows
+ venv/Scripts/activate
 
-Mac/Linux:
+ Mac / Linux
+ source venv/bin/activate
 
-source venv/bin/activate
-4. Instalar dependencias
-pip install flask
-▶️ Ejecutar el proyecto
-python app.py
+ 4. Instalar dependencias 
+ pip install flask
 
-Abrir en navegador:
+:arrow_forward: Ejecutar el proyecto python app.py
+```
 
-http://localhost:5000
-📁 Estructura del proyecto
-turnomed/
-│
-├── app.py
-├── database/
-│   └── turnomed.db
-├── templates/
-│   ├── login.html
-│   ├── admin.html
-│   ├── paciente.html
-│   └── medico.html
-├── static/
-│   └── estilos.css
-└── README.md
-👥 Roles del sistema
-👩‍💼 Administradora
-Carga horarios
-Asigna turnos
-Gestiona agenda
-🧑‍⚕️ Médico
-Consulta agenda
-👤 Paciente
-Consulta turnos
-Solicita turno
-🧪 Pruebas
+## Roles en el sistema
 
-Probar:
+- Administrador
 
-Login correcto e incorrecto
-Asignación de turnos
-Cancelación
-Visualización por rol
-📌 Flujo del sistema
-Admin carga horarios
-Admin asigna turnos
-Paciente consulta
-Médico visualiza agenda
-🚀 Buenas prácticas del equipo
-Hacer commits claros
-No subir archivos innecesarios
-Probar antes de subir
-Trabajar por ramas
-🌱 Futuras mejoras
-Notificaciones
-Reportes
-Multi consultorio
-Pagos
+Cargar horarios / Gestionar agenda / Registrar medicos
+
+- Medico
+
+Consultar agenda 
+
+- Paciente
+
+Consultar turno / Solicitar turno 
+## Funcionalidad
+ Este sistema tiene varias funcionalidades que ayudan a manejar mas facilmente la experiencia de sacar un turno medico. Entre las mas destacadas tenemos:
+ 
+ 1.  Ser facil e intuitivo de entender para todos los usuarios.
+ 2.  Mas facilidad para crear y pedir tunos.
+ 3. Tener mas orden de los pacientes y sus turnos.
+ 4. Los pacientes tienen mas informacion de sus medicos a mano.
+## Integrantes
+
+- Laura Gimenez 
+- Sofia Gomez
+- Franco Nicolas Placios
+- Alejandro Yanez Vazquez
+- Esteban Iwanczuk
+- Milena Avila
+- Benicio Gallego Cano
