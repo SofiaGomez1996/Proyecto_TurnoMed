@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import sqlite3
 import os
 import threading
+import webbrowser
 
 try:
     import webview
@@ -1166,4 +1167,25 @@ def perfil_paciente():
     )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    url = "http://127.0.0.1:5000"
+
+    if webview is not None:
+        flask_thread = threading.Thread(
+            target=lambda: app.run(debug=True, use_reloader=False),
+            daemon=True
+        )
+        flask_thread.start()
+        webview.create_window(
+            "TurnoMed",
+            url,
+            width=1200,
+            height=800
+        )
+    else:
+        flask_thread = threading.Thread(
+            target=lambda: app.run(debug=True, use_reloader=False),
+            daemon=True
+        )
+        flask_thread.start()
+        webbrowser.open_new(url)
+        flask_thread.join()
