@@ -376,31 +376,293 @@ td form {
 
 /* RESPONSIVE */
 
+/* RESPONSIVE — TurnoMed*/
+
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 200;
+    background: #003366;
+    border: none;
+    border-radius: 8px;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.sidebar-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+}
+
+/* Animación X cuando está abierto */
+.sidebar-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sidebar-toggle.open span:nth-child(2) { opacity: 0; }
+.sidebar-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Overlay oscuro detrás del sidebar en mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 99;
+}
+
+.sidebar-overlay.visible {
+    display: block;
+}
+
+/*  Tablet (≤ 900px)  */
 @media (max-width: 900px) {
+
+    /* Layout: sidebar se convierte en drawer */
     .layout {
-        flex-direction: column;
+        display: block;
+        position: relative;
     }
 
     .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 260px;
+        height: 100vh;
+        z-index: 100;
+        overflow-y: auto;
+        transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
+    }
+
+    .sidebar.open {
+        left: 0;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-toggle {
+        display: flex;
+    }
+
+    /* Contenido principal: ocupa todo el ancho */
+    .content {
+        margin-left: 0 !important;
         width: 100%;
+        padding-top: 70px; /* espacio para el botón hamburguesa */
     }
 
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
+    /* Header de página */
     .page-header {
         flex-direction: column;
-        gap: 14px;
+        align-items: flex-start;
+        gap: 10px;
     }
 
-    .content {
-        padding: 24px;
+    .page-header .date-pill {
+        align-self: flex-start;
     }
 
-    .form-grid {
-        grid-template-columns: 1fr;
+    /* Grid de cards: 1 columna */
+    .grid {
+        grid-template-columns: 1fr !important;
     }
+
+    /* Header de médico (foto + texto) */
+    .medico-header {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+    }
+
+    .medico-profile {
+        align-self: center;
+    }
+
+    /* Tablas: scroll horizontal */
+    .table-card {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 540px;
+    }
+
+    /* Formularios: inputs full width */
+    form input,
+    form select,
+    form button,
+    form .btn-link {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Filtros en columna */
+    .filtros-grupo {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filtros-form {
+        width: 100%;
+    }
+}
+
+/* Mobile (≤ 600px)  */
+
+@media (max-width: 600px) {
+
+    /* Tipografía más compacta */
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.1rem; }
+
+    /* Cards con menos padding */
+    .card {
+        padding: 16px !important;
+    }
+
+    .card-title {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Ocultar columnas menos críticas de tablas */
+    table th:nth-child(3),
+    table td:nth-child(3) {
+        display: none;
+    }
+
+    /* Botones de acción en tabla: más compactos */
+    .btn-danger,
+    .btn-secondary,
+    .btn-success,
+    .btn-primary {
+        padding: 6px 10px !important;
+        font-size: 0.8rem;
+    }
+
+    /* Avatar médico más chico */
+    .medico-avatar {
+        width: 72px !important;
+        height: 72px !important;
+    }
+
+    /* Footer compacto */
+    .footer {
+        font-size: 0.75rem;
+        text-align: center;
+        padding: 16px;
+    }
+}
+
+/*LOGIN + REGISTRO (estilos_registros.css / login inline)*/
+@media (max-width: 600px) {
+
+    .main-container {
+        padding: 20px 16px;
+    }
+
+    .login-container {
+        padding: 20px 16px !important;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .login-card {
+        padding: 20px 16px !important;
+    }
+
+    .login-logo img {
+        max-width: 120px;
+    }
+
+    /* Registro: fila de nombre/apellido pasa a columna */
+    .input-row {
+        flex-direction: column !important;
+        gap: 0;
+    }
+
+    .input-group {
+        width: 100% !important;
+    }
+
+    .input-group input,
+    .input-group select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Botón full width */
+    .login-methods button,
+    .login-methods .btn-primary {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/* TURNOS / FORMULARIO (turnos.html, formulario.html)*/
+@media (max-width: 600px) {
+
+    /* turnos.html tiene su propio .container */
+    .container {
+        padding: 20px 16px !important;
+    }
+
+    .container .login-container {
+        padding: 20px 16px !important;
+    }
+
+    .container input,
+    .container select,
+    .container button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* formulario.html */
+    .card input,
+    .card select,
+    .card button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/*AGENDA (agenda.html — estilos inline propios) */
+@media (max-width: 600px) {
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .header h1 {
+        font-size: 1.2rem;
+    }
+
+    .btn-asignar {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+}
+
+/* Reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar { transition: none; }
+    .sidebar-toggle span { transition: none; }
 }
 .medico-header {
     display: flex;
@@ -424,9 +686,8 @@ td form {
     background: white;
     box-shadow: 0 4px 12px rgba(0,0,0,.12);
 }
-/* =========================
-   LAYOUT GENERAL
-========================= */
+
+   /*LAYOUT GENERAL*/
 
 .layout {
     display: flex;
