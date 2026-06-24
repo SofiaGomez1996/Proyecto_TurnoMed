@@ -46,10 +46,20 @@ def inicializar_base_de_datos():
             telefono TEXT,
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            rol TEXT NOT NULL DEFAULT 'paciente'
+            rol TEXT NOT NULL DEFAULT 'paciente',
+            fecha_nacimiento TEXT,
+            activo INTEGER DEFAULT 1
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN fecha_nacimiento TEXT")
+    except sqlite3.OperationalError:
+        pass
 
+    try:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN activo INTEGER DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS medicos (
             id_medico INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -180,21 +190,22 @@ def buscar_usuario_por_email(email):
     return usuario
 
 
-def registrar_paciente(nombre, apellido, dni, telefono, email, password):
+def registrar_paciente(nombre, apellido, dni, telefono, email, password, fecha_nacimiento=None):
     conn = get_conn()
     cursor = conn.cursor()
 
     cursor.execute("""
         INSERT INTO usuarios
-        (nombre, apellido, dni, telefono, email, password, rol)
-        VALUES (?, ?, ?, ?, ?, ?, 'paciente')
+        (nombre, apellido, dni, telefono, email, password, rol, fecha_nacimiento, activo)
+        VALUES (?, ?, ?, ?, ?, ?, 'paciente', ?, 1)
     """, (
         nombre,
         apellido,
         dni,
         telefono,
         email.strip().lower(),
-        generate_password_hash(password)
+        generate_password_hash(password),
+        fecha_nacimiento
     ))
 
     conn.commit()
@@ -237,7 +248,61 @@ def obtener_pacientes(busqueda=None):
     conn.close()
     return pacientes
 
+def obtener_pacientes_admin(busqueda=None, estado="activos"):
+    conn = get_conn()
 
+    query = """
+        SELECT *
+        FROM usuarios
+        WHERE rol = 'paciente'
+    """
+
+    params = []
+
+    if estado == "activos":
+        query += " AND activo = 1"
+
+    elif estado == "inactivos":
+        query += " AND activo = 0"
+
+    if busqueda:
+        termino = f"%{busqueda.strip()}%"
+        query += """
+            AND (
+                nombre LIKE ?
+                OR apellido LIKE ?
+                OR dni LIKE ?
+                OR email LIKE ?
+                OR telefono LIKE ?
+            )
+        """
+        params.extend([termino, termino, termino, termino, termino])
+
+    query += " ORDER BY activo DESC, apellido, nombre"
+
+    pacientes = conn.execute(query, params).fetchall()
+    conn.close()
+    return pacientes
+
+
+def calcular_edad(fecha_nacimiento):
+    if not fecha_nacimiento:
+        return "Sin dato"
+
+    try:
+        nacimiento = datetime.strptime(fecha_nacimiento, "%Y-%m-%d")
+        hoy = datetime.today()
+
+        edad = hoy.year - nacimiento.year
+
+        if (hoy.month, hoy.day) < (nacimiento.month, nacimiento.day):
+            edad -= 1
+
+        return edad
+
+    except ValueError:
+        return "Sin dato"
+    
 def obtener_medicos(busqueda=None, especialidad=None, estado="activos"):
     conn = get_conn()
 
@@ -463,9 +528,10 @@ def obtener_turnos_por_paciente(id_paciente):
     return turnos
 
 
-def obtener_turnos_por_medico(id_medico):
+def obtener_turnos_por_medico(id_medico, fecha=None):
     conn = get_conn()
-    turnos = conn.execute("""
+
+    query = """
         SELECT
             turnos.*,
             usuarios.nombre AS paciente_nombre,
@@ -477,11 +543,19 @@ def obtener_turnos_por_medico(id_medico):
         INNER JOIN usuarios ON turnos.id_paciente = usuarios.id_usuario
         INNER JOIN medicos ON turnos.id_medico = medicos.id_medico
         WHERE turnos.id_medico = ?
-        ORDER BY turnos.fecha, turnos.hora
-    """, (id_medico,)).fetchall()
+    """
+
+    params = [id_medico]
+
+    if fecha:
+        query += " AND turnos.fecha = ?"
+        params.append(fecha)
+
+    query += " ORDER BY turnos.fecha, turnos.hora"
+
+    turnos = conn.execute(query, params).fetchall()
     conn.close()
     return turnos
-
 
 def obtener_medico_por_email(email):
     conn = get_conn()
@@ -510,7 +584,8 @@ def actualizar_usuario(
     apellido,
     dni,
     telefono,
-    email
+    email,
+    fecha_nacimiento=None
 ):
     conn = get_conn()
     cursor = conn.cursor()
@@ -522,7 +597,8 @@ def actualizar_usuario(
             apellido = ?,
             dni = ?,
             telefono = ?,
-            email = ?
+            email = ?,
+            fecha_nacimiento = ?
         WHERE id_usuario = ?
     """, (
         nombre,
@@ -530,6 +606,7 @@ def actualizar_usuario(
         dni,
         telefono,
         email,
+        fecha_nacimiento,
         id_usuario
     ))
 
@@ -610,7 +687,8 @@ def registro():
                 request.form["dni"],
                 request.form["telefono"],
                 request.form["email"],
-                request.form["password"]
+                request.form["password"],
+                request.form.get("fecha_nacimiento")
             )
             flash("Registro exitoso. Ya podés iniciar sesión.")
             return redirect(url_for("login"))
@@ -913,10 +991,17 @@ def paciente():
 
     filtro_especialidad = request.args.get("especialidad", "")
     filtro_medico = request.args.get("id_medico", "")
+    filtro_fecha = request.args.get("fecha", "")
+
+    fechas_disponibles = obtener_fechas_disponibles(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None
+    )
 
     horarios_disponibles = obtener_horarios_filtrados(
         filtro_especialidad if filtro_especialidad else None,
-        filtro_medico if filtro_medico else None
+        filtro_medico if filtro_medico else None,
+        filtro_fecha if filtro_fecha else None
     )
 
     return render_template(
@@ -924,10 +1009,12 @@ def paciente():
         usuario=current_user,
         turnos=obtener_turnos_por_paciente(current_user.id),
         horarios_disponibles=horarios_disponibles,
+        fechas_disponibles=fechas_disponibles,
         especialidades=obtener_especialidades(),
         medicos=obtener_medicos(),
         filtro_especialidad=filtro_especialidad,
-        filtro_medico=filtro_medico
+        filtro_medico=filtro_medico,
+        filtro_fecha=filtro_fecha
     )
 @app.route("/paciente/cancelar_turno/<int:id_turno>", methods=["POST"])
 @login_required
@@ -1048,13 +1135,18 @@ def medico():
         flash("No hay médico asociado a este usuario.")
         return redirect(url_for("login"))
 
+    filtro_fecha = request.args.get("fecha", "")
+
     return render_template(
         "medico.html",
         usuario=current_user,
         medico=medico_db,
-        turnos=obtener_turnos_por_medico(medico_db["id_medico"])
+        turnos=obtener_turnos_por_medico(
+            medico_db["id_medico"],
+            filtro_fecha if filtro_fecha else None
+        ),
+        filtro_fecha=filtro_fecha
     )
-
 
 @app.route("/medico/llamado/<int:id_turno>", methods=["POST"])
 @login_required
@@ -1104,6 +1196,18 @@ def perfil_medico():
     if request.method == "POST":
 
         email_nuevo = request.form["email"].strip().lower()
+        nombre_foto = medico["foto"]
+    foto_archivo = request.files.get("foto")
+
+    if foto_archivo and foto_archivo.filename != "":
+        if not archivo_permitido(foto_archivo.filename):
+            flash("Formato de imagen no permitido. Usá PNG, JPG, JPEG o WEBP.")
+            return redirect(url_for("perfil_medico"))
+
+        nombre_seguro = secure_filename(foto_archivo.filename)
+        nombre_foto = f"{email_nuevo.replace('@', '_').replace('.', '_')}_{nombre_seguro}"
+        ruta_foto = os.path.join(app.config["UPLOAD_FOLDER"], nombre_foto)
+        foto_archivo.save(ruta_foto)
 
         actualizar_usuario(
             current_user.id,
@@ -1111,7 +1215,8 @@ def perfil_medico():
             request.form["apellido"],
             "",
             request.form["telefono"],
-            email_nuevo
+            email_nuevo,
+            None
         )
 
         conn = get_conn()
@@ -1123,13 +1228,15 @@ def perfil_medico():
                 nombre = ?,
                 apellido = ?,
                 telefono = ?,
-                email = ?
+                email = ?,
+                foto = ?
             WHERE id_medico = ?
         """, (
             request.form["nombre"],
             request.form["apellido"],
             request.form["telefono"],
             email_nuevo,
+            nombre_foto,
             medico["id_medico"]
         ))
 
@@ -1188,7 +1295,8 @@ def perfil_paciente():
             request.form["apellido"],
             request.form["dni"],
             request.form["telefono"],
-            request.form["email"].strip().lower()
+            request.form["email"].strip().lower(),
+            request.form.get("fecha_nacimiento")
         )
 
         password_actual = request.form["password_actual"]
@@ -1468,6 +1576,144 @@ def admin_agenda_disponible():
         filtro_medico=filtro_medico,
         filtro_fecha=filtro_fecha
     )
+@app.route("/admin/pacientes")
+@login_required
+def admin_pacientes():
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    busqueda = request.args.get("busqueda", "")
+    estado = request.args.get("estado", "activos")
+
+    pacientes = obtener_pacientes_admin(
+        busqueda if busqueda else None,
+        estado
+    )
+
+    return render_template(
+        "admin_pacientes.html",
+        pacientes=pacientes,
+        busqueda=busqueda,
+        filtro_estado=estado,
+        calcular_edad=calcular_edad
+    )
+
+
+@app.route("/admin/agregar_paciente", methods=["POST"])
+@login_required
+def admin_agregar_paciente():
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    try:
+        registrar_paciente(
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["dni"],
+            request.form["telefono"],
+            request.form["email"],
+            request.form["password"],
+            request.form.get("fecha_nacimiento")
+        )
+
+        flash("Paciente agregado correctamente. Ya puede iniciar sesión con su email y contraseña.")
+
+    except Exception as e:
+        flash(f"Error: {str(e)}")
+
+    return redirect(url_for("admin_pacientes"))
+
+
+@app.route("/admin/pacientes/editar/<int:id_paciente>", methods=["POST"])
+@login_required
+def admin_editar_paciente(id_paciente):
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE usuarios
+            SET
+                nombre = ?,
+                apellido = ?,
+                dni = ?,
+                telefono = ?,
+                email = ?,
+                fecha_nacimiento = ?
+            WHERE id_usuario = ?
+            AND rol = 'paciente'
+        """, (
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["dni"],
+            request.form["telefono"],
+            request.form["email"].strip().lower(),
+            request.form.get("fecha_nacimiento"),
+            id_paciente
+        ))
+
+        conn.commit()
+        flash("Paciente actualizado correctamente.")
+
+    except Exception:
+        flash("No se pudo actualizar el paciente. Verificá que el correo no esté repetido.")
+
+    conn.close()
+    return redirect(url_for("admin_pacientes"))
+
+
+@app.route("/admin/pacientes/desactivar/<int:id_paciente>", methods=["POST"])
+@login_required
+def admin_desactivar_paciente(id_paciente):
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE usuarios
+        SET activo = 0
+        WHERE id_usuario = ?
+        AND rol = 'paciente'
+    """, (id_paciente,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Paciente desactivado correctamente.")
+    return redirect(url_for("admin_pacientes"))
+
+
+@app.route("/admin/pacientes/activar/<int:id_paciente>", methods=["POST"])
+@login_required
+def admin_activar_paciente(id_paciente):
+    if current_user.rol != "admin":
+        flash("No tenés permiso.")
+        return redirect(url_for("login"))
+
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE usuarios
+        SET activo = 1
+        WHERE id_usuario = ?
+        AND rol = 'paciente'
+    """, (id_paciente,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Paciente activado correctamente.")
+    return redirect(url_for("admin_pacientes"))
 
 if __name__ == "__main__":
     app.run(debug=True)

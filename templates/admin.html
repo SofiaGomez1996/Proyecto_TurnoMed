@@ -11,7 +11,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo-box">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="TurnoMed">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
         <h2>TurnoMed</h2>
@@ -19,6 +19,7 @@
         <nav class="menu">
             <a href="/admin" class="active">🏠 Panel</a>
             <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
+            <a href="/admin/pacientes">👤 Administrar pacientes</a>
             <a href="#horarios">📅 Horarios</a>
             <a href="/admin/agenda_disponible">🕒 Agenda disponible</a>
             <a href="#asignar-turno">👤 Asignar turno</a>
@@ -37,19 +38,15 @@
         <header class="page-header">
             <div>
                 <h1>Panel de administración</h1>
-                <p>Gestión centralizada de médicos, horarios, pacientes y turnos.</p>
+                <p>Gestión centralizada de médicos, pacientes, horarios y turnos.</p>
             </div>
 
-            <div class="date-pill">
-                📅 Sistema TurnoMed
-            </div>
+            <div class="date-pill">📅 Sistema TurnoMed</div>
         </header>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">
-                    {{ messages[0] }}
-                </div>
+                <div class="alerta">{{ messages[0] }}</div>
             {% endif %}
         {% endwith %}
 
@@ -60,31 +57,21 @@
                     <div class="icon-box">👨‍⚕️</div>
                     <div>
                         <h2>Administrar médicos</h2>
-                        <p class="table-description">
-                            Agregar, editar, cambiar foto o desactivar médicos.
-                        </p>
+                        <p class="table-description">Agregar, editar, cambiar foto, activar o desactivar médicos.</p>
                     </div>
                 </div>
-
-                <a href="/admin/medicos" class="btn-link">
-                    Ir a administrar médicos
-                </a>
+                <a href="/admin/medicos" class="btn-link">Ir a administrar médicos</a>
             </div>
 
             <div class="card">
                 <div class="card-title">
-                    <div class="icon-box">🕒</div>
+                    <div class="icon-box">👤</div>
                     <div>
-                        <h2>Agenda disponible</h2>
-                        <p class="table-description">
-                            Consultar horarios disponibles por especialidad, médico y fecha.
-                        </p>
+                        <h2>Administrar pacientes</h2>
+                        <p class="table-description">Agregar, editar, activar o desactivar pacientes.</p>
                     </div>
                 </div>
-
-                <a href="/admin/agenda_disponible" class="btn-link">
-                    Ver agenda disponible
-                </a>
+                <a href="/admin/pacientes" class="btn-link">Ir a administrar pacientes</a>
             </div>
 
         </section>
@@ -100,7 +87,6 @@
                 <form method="POST" action="/cargar_horario">
                     <select name="id_medico" required>
                         <option value="">Seleccionar médico</option>
-
                         {% for medico in medicos %}
                             <option value="{{ medico.id_medico }}">
                                 Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
@@ -111,9 +97,7 @@
                     <input type="date" name="fecha" required>
                     <input type="time" name="hora" required>
 
-                    <button type="submit">
-                        + Cargar horario
-                    </button>
+                    <button type="submit">+ Cargar horario</button>
                 </form>
             </div>
 
@@ -122,16 +106,13 @@
                     <div class="icon-box">⏱️</div>
                     <div>
                         <h2>Generar horarios por franja</h2>
-                        <p class="table-description">
-                            Ejemplo: de 08:00 a 09:00 cada 10 minutos.
-                        </p>
+                        <p class="table-description">Ejemplo: de 08:00 a 09:00 cada 10 minutos.</p>
                     </div>
                 </div>
 
                 <form method="POST" action="/generar_horarios">
                     <select name="id_medico" required>
                         <option value="">Seleccionar médico</option>
-
                         {% for medico in medicos %}
                             <option value="{{ medico.id_medico }}">
                                 Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
@@ -139,21 +120,17 @@
                         {% endfor %}
                     </select>
 
-                    <input type="date" name="fecha" required>
-                    <input type="time" name="hora_inicio" required>
-                    <input type="time" name="hora_fin" required>
+                    <div class="form-grid">
+                        <input type="date" name="fecha" required>
+                        <input type="number" name="frecuencia" min="1" placeholder="Frecuencia en minutos. Ej: 10" required>
+                    </div>
 
-                    <input
-                        type="number"
-                        name="frecuencia"
-                        min="1"
-                        placeholder="Frecuencia en minutos. Ej: 10"
-                        required
-                    >
+                    <div class="form-grid">
+                        <input type="time" name="hora_inicio" required>
+                        <input type="time" name="hora_fin" required>
+                    </div>
 
-                    <button type="submit">
-                        Generar horarios disponibles
-                    </button>
+                    <button type="submit">Generar horarios disponibles</button>
                 </form>
             </div>
 
@@ -164,27 +141,22 @@
                 <div class="icon-box">👤</div>
                 <div>
                     <h2>Asignar turno</h2>
-                    <p class="table-description">
-                        Buscá al paciente y seleccioná un horario disponible.
-                    </p>
+                    <p class="table-description">Buscá al paciente y seleccioná un horario disponible.</p>
                 </div>
             </div>
 
             <form method="GET" action="/admin#asignar-turno">
-                <input
-                    type="text"
-                    name="buscar_paciente"
-                    placeholder="Buscar paciente por nombre, apellido, DNI, email o teléfono"
-                    value="{{ busqueda_paciente }}"
-                >
+                <div class="form-grid">
+                    <input
+                        type="text"
+                        name="buscar_paciente"
+                        placeholder="Buscar paciente por nombre, apellido, DNI, email o teléfono"
+                        value="{{ busqueda_paciente }}"
+                    >
+                    <button type="submit">Buscar paciente</button>
+                </div>
 
-                <button type="submit">
-                    Buscar paciente
-                </button>
-
-                <a href="/admin#asignar-turno" class="btn-link">
-                    Limpiar búsqueda
-                </a>
+                <a href="/admin#asignar-turno" class="btn-link">Limpiar búsqueda</a>
             </form>
 
             <br>
@@ -192,7 +164,6 @@
             <form method="POST" action="/asignar_turno">
                 <select name="id_paciente" required>
                     <option value="">Seleccionar paciente</option>
-
                     {% for paciente in pacientes %}
                         <option value="{{ paciente.id_usuario }}">
                             {{ paciente.apellido }}, {{ paciente.nombre }} | DNI: {{ paciente.dni }} | {{ paciente.email }}
@@ -202,7 +173,6 @@
 
                 <select name="id_horario" required>
                     <option value="">Seleccionar horario disponible</option>
-
                     {% for horario in horarios %}
                         <option value="{{ horario.id_horario }}">
                             {{ horario.fecha }} - {{ horario.hora }}
@@ -213,21 +183,11 @@
                 </select>
 
                 {% if pacientes and horarios %}
-                    <button type="submit" class="btn-secondary">
-                        ✓ Asignar turno
-                    </button>
+                    <button type="submit" class="btn-secondary">✓ Asignar turno</button>
                 {% else %}
-                    <button type="button" class="btn-danger" disabled>
-                        No hay pacientes u horarios disponibles
-                    </button>
+                    <button type="button" class="btn-danger" disabled>No hay pacientes u horarios disponibles</button>
                 {% endif %}
             </form>
-
-            <br>
-
-            <a href="/admin/agenda_disponible" class="btn-link">
-                Ver todos los horarios disponibles
-            </a>
         </section>
 
         <section class="card table-card" id="agenda">
@@ -235,9 +195,7 @@
                 <div class="icon-box">📋</div>
                 <div>
                     <h2>Agenda general</h2>
-                    <p class="table-description">
-                        Listado de todos los turnos asignados.
-                    </p>
+                    <p class="table-description">Listado de todos los turnos asignados.</p>
                 </div>
             </div>
 
@@ -263,7 +221,6 @@
                                 <td>{{ turno.especialidad }}</td>
                                 <td>{{ turno.fecha }}</td>
                                 <td>{{ turno.hora }}</td>
-
                                 <td>
                                     {% if turno.estado == "Cancelado" %}
                                         <span class="estado-cancelado">Cancelado</span>
@@ -271,15 +228,12 @@
                                         <span class="estado">Confirmado</span>
                                     {% endif %}
                                 </td>
-
                                 <td>
                                     {% if turno.estado != "Cancelado" %}
                                         <form method="POST"
                                               action="/cancelar_turno/{{ turno.id }}"
                                               onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
-                                            <button type="submit" class="btn-danger">
-                                                Cancelar
-                                            </button>
+                                            <button type="submit" class="btn-danger">Cancelar</button>
                                         </form>
                                     {% else %}
                                         -
@@ -303,7 +257,7 @@
         </section>
 
         <footer class="footer">
-            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos Grupo 8
         </footer>
 
     </main>
