@@ -11,7 +11,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo-box">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="TurnoMed">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
         <h2>TurnoMed</h2>
@@ -19,6 +19,7 @@
         <nav class="menu">
             <a href="/admin">🏠 Panel</a>
             <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
+            <a href="/admin/pacientes">👤 Administrar pacientes</a>
             <a href="/admin/agenda_disponible" class="active">🕒 Agenda disponible</a>
             <a href="/logout">↪ Cerrar sesión</a>
         </nav>
@@ -34,19 +35,15 @@
         <header class="page-header">
             <div>
                 <h1>Agenda disponible</h1>
-                <p>Primero filtrá por especialidad o médico, luego seleccioná una fecha disponible.</p>
+                <p>Filtrá por especialidad, médico y fecha para consultar disponibilidad.</p>
             </div>
 
-            <div class="date-pill">
-                🕒 Disponibilidad
-            </div>
+            <div class="date-pill">🕒 Disponibilidad</div>
         </header>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">
-                    {{ messages[0] }}
-                </div>
+                <div class="alerta">{{ messages[0] }}</div>
             {% endif %}
         {% endwith %}
 
@@ -56,49 +53,55 @@
                 <div>
                     <h2>Filtrar disponibilidad</h2>
                     <p class="table-description">
-                        Elegí especialidad y/o médico. El sistema mostrará solo las fechas con horarios disponibles.
+                        El sistema muestra solo fechas con horarios libres según los filtros.
                     </p>
                 </div>
             </div>
 
             <form method="GET" action="/admin/agenda_disponible">
 
-                <select name="especialidad">
-                    <option value="">Todas las especialidades</option>
+                <div class="form-grid">
 
-                    {% for item in especialidades %}
-                        <option value="{{ item.especialidad }}"
-                            {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
-                            {{ item.especialidad }}
-                        </option>
-                    {% endfor %}
-                </select>
+                    <select name="especialidad">
+                        <option value="">Todas las especialidades</option>
 
-                <select name="id_medico">
-                    <option value="">Todos los médicos</option>
+                        {% for item in especialidades %}
+                            <option value="{{ item.especialidad }}"
+                                {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
+                                {{ item.especialidad }}
+                            </option>
+                        {% endfor %}
+                    </select>
 
-                    {% for medico in medicos %}
-                        <option value="{{ medico.id_medico }}"
-                            {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
-                            Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
-                        </option>
-                    {% endfor %}
-                </select>
+                    <select name="id_medico">
+                        <option value="">Todos los médicos</option>
 
-                <select name="fecha">
-                    <option value="">Todas las fechas disponibles</option>
+                        {% for medico in medicos %}
+                            <option value="{{ medico.id_medico }}"
+                                {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
+                                Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
+                            </option>
+                        {% endfor %}
+                    </select>
 
-                    {% for item in fechas_disponibles %}
-                        <option value="{{ item.fecha }}"
-                            {% if filtro_fecha == item.fecha %}selected{% endif %}>
-                            {{ item.fecha }}
-                        </option>
-                    {% endfor %}
-                </select>
+                </div>
 
-                <button type="submit">
-                    Buscar horarios
-                </button>
+                <div class="form-grid">
+
+                    <select name="fecha">
+                        <option value="">Todas las fechas disponibles</option>
+
+                        {% for item in fechas_disponibles %}
+                            <option value="{{ item.fecha }}"
+                                {% if filtro_fecha == item.fecha %}selected{% endif %}>
+                                {{ item.fecha }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Buscar horarios</button>
+
+                </div>
 
                 <a href="/admin/agenda_disponible" class="btn-link">
                     Limpiar filtros
@@ -135,13 +138,9 @@
                             <tr>
                                 <td>{{ horario.fecha }}</td>
                                 <td>{{ horario.hora }}</td>
-                                <td>
-                                    Dr/a {{ horario.medico_apellido }}, {{ horario.medico_nombre }}
-                                </td>
+                                <td>Dr/a {{ horario.medico_apellido }}, {{ horario.medico_nombre }}</td>
                                 <td>{{ horario.especialidad }}</td>
-                                <td>
-                                    <span class="estado">Disponible</span>
-                                </td>
+                                <td><span class="estado">Disponible</span></td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -150,9 +149,7 @@
                                 <div class="empty-state">
                                     <div class="empty-icon">🕒</div>
                                     <strong>No hay horarios disponibles.</strong>
-                                    <p>
-                                        Probá con otro médico, especialidad o generá nuevos horarios desde el panel.
-                                    </p>
+                                    <p>Probá con otro médico, especialidad o generá nuevos horarios desde el panel.</p>
                                 </div>
                             </td>
                         </tr>
@@ -162,7 +159,7 @@
         </section>
 
         <footer class="footer">
-            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos Grupo 8
         </footer>
 
     </main>

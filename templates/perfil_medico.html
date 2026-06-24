@@ -11,7 +11,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo-box">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="TurnoMed">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
         <h2>TurnoMed</h2>
@@ -41,7 +41,11 @@
 
             <div class="medico-profile">
                 <img
-                    src="{{ url_for('static', filename='imagenes/medicos/' + medico.foto) }}"
+                    src="{% if medico.foto %}
+                            {{ url_for('static', filename='imagenes/medicos/' + medico.foto) }}
+                         {% else %}
+                            {{ url_for('static', filename='imagenes/logo.png') }}
+                         {% endif %}"
                     alt="Foto médico"
                     class="medico-avatar"
                 >
@@ -54,43 +58,83 @@
             {% endif %}
         {% endwith %}
 
-        <section class="card">
-            <div class="card-title">
-                <div class="icon-box">⚙</div>
-                <h2>Datos del médico</h2>
+        <section class="grid">
+
+            <div class="card">
+                <div class="card-title">
+                    <div class="icon-box">🩺</div>
+                    <div>
+                        <h2>Datos profesionales</h2>
+                        <p class="table-description">
+                            Actualizá tus datos personales de acceso.
+                        </p>
+                    </div>
+                </div>
+
+                <form method="POST" action="/medico/perfil" enctype="multipart/form-data">
+
+                    <div class="form-grid">
+                        <input type="text" name="nombre" value="{{ medico.nombre }}" placeholder="Nombre" required>
+                        <input type="text" name="apellido" value="{{ medico.apellido }}" placeholder="Apellido" required>
+                    </div>
+
+                    <input type="text" value="{{ medico.especialidad }}" placeholder="Especialidad" disabled>
+
+                    <div class="form-grid">
+                        <input type="text" name="telefono" value="{{ medico.telefono }}" placeholder="Teléfono">
+                        <input type="email" name="email" value="{{ medico.email }}" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <label>Cambiar foto de perfil</label>
+                    <input type="file" name="foto" accept="image/*">
+
+                    <hr>
+
+                    <h3>Cambiar contraseña</h3>
+
+                    <input type="password" name="password_actual" placeholder="Contraseña actual">
+                    <input type="password" name="nueva_password" placeholder="Nueva contraseña">
+                    <input type="password" name="confirmar_password" placeholder="Confirmar nueva contraseña">
+
+                    <button type="submit">
+                        Guardar cambios
+                    </button>
+
+                </form>
             </div>
 
-            <form method="POST" action="/medico/perfil">
+            <div class="card">
+                <div class="card-title">
+                    <div class="icon-box">👤</div>
+                    <div>
+                        <h2>Foto actual</h2>
+                        <p class="table-description">
+                            Imagen visible en tu agenda médica.
+                        </p>
+                    </div>
+                </div>
 
-                <input type="text" name="nombre" value="{{ medico.nombre }}" placeholder="Nombre" required>
+                <div class="medico-profile" style="margin: 20px 0;">
+                    <img
+                        src="{% if medico.foto %}
+                                {{ url_for('static', filename='imagenes/medicos/' + medico.foto) }}
+                             {% else %}
+                                {{ url_for('static', filename='imagenes/logo.png') }}
+                             {% endif %}"
+                        alt="Foto médico"
+                        class="medico-avatar"
+                    >
+                </div>
 
-                <input type="text" name="apellido" value="{{ medico.apellido }}" placeholder="Apellido" required>
+                <p class="table-description">
+                    Para cambiar la imagen, seleccioná un archivo desde el formulario y guardá los cambios.
+                </p>
+            </div>
 
-                <input type="text" value="{{ medico.especialidad }}" placeholder="Especialidad" disabled>
-
-                <input type="text" name="telefono" value="{{ medico.telefono }}" placeholder="Teléfono">
-
-                <input type="email" name="email" value="{{ medico.email }}" placeholder="Correo electrónico" required>
-
-                <hr>
-
-                <h3>Cambiar contraseña</h3>
-
-                <input type="password" name="password_actual" placeholder="Contraseña actual">
-
-                <input type="password" name="nueva_password" placeholder="Nueva contraseña">
-
-                <input type="password" name="confirmar_password" placeholder="Confirmar nueva contraseña">
-
-                <button type="submit">
-                    Guardar cambios
-                </button>
-
-            </form>
         </section>
 
         <footer class="footer">
-            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos Grupo 8
         </footer>
 
     </main>

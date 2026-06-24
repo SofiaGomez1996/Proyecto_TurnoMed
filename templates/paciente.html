@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Paciente - TurnoMed</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='estilos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
 </head>
 
 <body>
@@ -13,99 +11,53 @@
 <div class="layout">
 
     <aside class="sidebar">
-
         <div class="sidebar-logo-box">
-            <img
-                src="{{ url_for('static', filename='logo.png') }}"
-                alt="TurnoMed">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
         <h2>TurnoMed</h2>
 
         <nav class="menu">
-
-            <a href="/paciente" class="active">
-                📋 Mis turnos
-            </a>
-
-            <a href="/paciente/perfil">
-                ⚙ Mi perfil
-            </a>
-
-            <a href="#solicitud">
-                💬 Solicitar turno
-            </a>
-
-            <a href="/logout">
-                ↪ Cerrar sesión
-            </a>
-
+            <a href="/paciente" class="active">📋 Mis turnos</a>
+            <a href="#solicitud">💬 Solicitar turno</a>
+            <a href="/paciente/perfil">⚙ Mi perfil</a>
+            <a href="/logout">↪ Cerrar sesión</a>
         </nav>
 
         <div class="sidebar-info">
             <strong>Paciente</strong>
             <p>Consulta y solicitud de turnos</p>
         </div>
-
     </aside>
 
     <main class="content">
 
         <header class="page-header">
-
             <div>
-                <h1>
-                    Mis turnos
-                </h1>
-
-                <p>
-                    Hola,
-                    {{ usuario.nombre }}.
-                    Acá podés consultar y solicitar tus turnos.
-                </p>
+                <h1>Mis turnos</h1>
+                <p>Hola, {{ usuario.nombre }}. Acá podés consultar y solicitar tus turnos.</p>
             </div>
 
-            <div class="date-pill">
-                👤 Vista paciente
-            </div>
-
+            <div class="date-pill">👤 Vista paciente</div>
         </header>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="alerta">
-                    {{ messages[0] }}
-                </div>
+                <div class="alerta">{{ messages[0] }}</div>
             {% endif %}
         {% endwith %}
 
-        <!-- TURNOS ASIGNADOS -->
         <section class="card table-card">
-
             <div class="card-title">
-
-                <div class="icon-box">
-                    📅
-                </div>
-
+                <div class="icon-box">📅</div>
                 <div>
-
-                    <h2>
-                        Turnos asignados
-                    </h2>
-
-                    <p class="table-description">
-                        El paciente solo visualiza sus propios turnos.
-                    </p>
-
+                    <h2>Turnos asignados</h2>
+                    <p class="table-description">Estos son tus turnos registrados en el sistema.</p>
                 </div>
-
             </div>
 
             <table>
-
                 <thead>
-
                     <tr>
                         <th>Médico</th>
                         <th>Especialidad</th>
@@ -114,147 +66,72 @@
                         <th>Estado</th>
                         <th>Acción</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
+                    {% if turnos %}
+                        {% for turno in turnos %}
+                            <tr>
+                                <td>Dr/a {{ turno.medico_apellido }}</td>
+                                <td>{{ turno.especialidad }}</td>
+                                <td>{{ turno.fecha }}</td>
+                                <td>{{ turno.hora }}</td>
+                                <td>
+                                    {% if turno.estado == "Cancelado" %}
+                                        <span class="estado-cancelado">Cancelado</span>
+                                    {% else %}
+                                        <span class="estado">Confirmado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if turno.estado != "Cancelado" %}
+                                        <form
+                                            method="POST"
+                                            action="/paciente/cancelar_turno/{{ turno.id }}"
+                                            onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
 
-                {% if turnos %}
-
-                    {% for turno in turnos %}
-
+                                            <button type="submit" class="btn-danger">
+                                                Cancelar turno
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
                         <tr>
-
-                            <td>
-                                Dr/a
-                                {{ turno.medico_apellido }}
-                            </td>
-
-                            <td>
-                                {{ turno.especialidad }}
-                            </td>
-
-                            <td>
-                                {{ turno.fecha }}
-                            </td>
-
-                            <td>
-                                {{ turno.hora }}
-                            </td>
-
-                            <td>
-
-                                {% if turno.estado == "Cancelado" %}
-
-                                    <span class="estado-cancelado">
-                                        Cancelado
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="estado">
-                                        Confirmado
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-                            <td>
-
-                                {% if turno.estado != "Cancelado" %}
-
-                                    <form
-                                        method="POST"
-                                        action="/paciente/cancelar_turno/{{ turno.id }}"
-                                        onsubmit="return confirm('¿Está seguro que desea cancelar este turno?');">
-
-                                        <button
-                                            type="submit"
-                                            class="btn-danger">
-
-                                            Cancelar turno
-
-                                        </button>
-
-                                    </form>
-
-                                {% else %}
-                                    -
-                                {% endif %}
-
-                            </td>
-
-                        </tr>
-
-                    {% endfor %}
-
-                {% else %}
-
-                    <tr>
-
-                        <td colspan="6">
-
-                            <div class="empty-state">
-
-                                <div class="empty-icon">
-                                    📅
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-icon">📅</div>
+                                    <strong>No tenés turnos asignados.</strong>
+                                    <p>Cuando solicites un turno, aparecerá en esta sección.</p>
                                 </div>
-
-                                <strong>
-                                    No tenés turnos asignados.
-                                </strong>
-
-                                <p>
-                                    Cuando solicites un turno,
-                                    aparecerá en esta sección.
-                                </p>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                {% endif %}
-
+                            </td>
+                        </tr>
+                    {% endif %}
                 </tbody>
-
             </table>
-
         </section>
 
-        <!-- SOLICITAR TURNO -->
-        <section class="card table-card" id="solicitud">
-
+        <section class="card" id="solicitud">
             <div class="card-title">
-
-                <div class="icon-box">
-                    💬
-                </div>
-
+                <div class="icon-box">💬</div>
                 <div>
-
-                    <h2>
-                        Solicitar turno
-                    </h2>
-
+                    <h2>Solicitar turno</h2>
                     <p class="table-description">
-                        Filtrá por especialidad o médico y elegí el horario que más te convenga.
+                        Elegí especialidad, médico y fecha disponible para ver los horarios.
                     </p>
-
                 </div>
-
             </div>
 
-            <!-- Filtros -->
-            <form method="GET" action="{{ url_for('paciente') }}" class="filtros-form">
+            <form method="GET" action="{{ url_for('paciente') }}#solicitud">
 
-                <div class="filtros-grupo">
+                <div class="form-grid">
+                    <select name="especialidad" onchange="this.form.submit()">
+                        <option value="">Todas las especialidades</option>
 
-                    <label for="especialidad">Especialidad:</label>
-                    <select name="especialidad" id="especialidad" onchange="this.form.submit()">
-                        <option value="">Todas</option>
                         {% for esp in especialidades %}
                             <option value="{{ esp['especialidad'] }}"
                                 {% if filtro_especialidad == esp['especialidad'] %}selected{% endif %}>
@@ -263,24 +140,50 @@
                         {% endfor %}
                     </select>
 
-                    <label for="id_medico">Médico:</label>
-                    <select name="id_medico" id="id_medico" onchange="this.form.submit()">
-                        <option value="">Todos</option>
+                    <select name="id_medico" onchange="this.form.submit()">
+                        <option value="">Todos los médicos</option>
+
                         {% for m in medicos %}
                             <option value="{{ m['id_medico'] }}"
                                 {% if filtro_medico == m['id_medico']|string %}selected{% endif %}>
-                                Dr/a {{ m['apellido'] }}, {{ m['nombre'] }} — {{ m['especialidad'] }}
+                                Dr/a {{ m['apellido'] }}, {{ m['nombre'] }} | {{ m['especialidad'] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <select name="fecha" onchange="this.form.submit()">
+                        <option value="">Todas las fechas disponibles</option>
+
+                        {% for item in fechas_disponibles %}
+                            <option value="{{ item.fecha }}"
+                                {% if filtro_fecha == item.fecha %}selected{% endif %}>
+                                {{ item.fecha }}
                             </option>
                         {% endfor %}
                     </select>
 
+                    <a href="/paciente#solicitud" class="btn-link">
+                        Limpiar filtros
+                    </a>
                 </div>
 
             </form>
+        </section>
 
-            <!-- Listado de horarios disponibles -->
+        <section class="card table-card">
+            <div class="card-title">
+                <div class="icon-box">🕒</div>
+                <div>
+                    <h2>Horarios disponibles</h2>
+                    <p class="table-description">
+                        Seleccioná el turno que más te convenga.
+                    </p>
+                </div>
+            </div>
+
             <table>
-
                 <thead>
                     <tr>
                         <th>Especialidad</th>
@@ -292,77 +195,45 @@
                 </thead>
 
                 <tbody>
+                    {% if horarios_disponibles %}
+                        {% for h in horarios_disponibles %}
+                            <tr>
+                                <td>{{ h['especialidad'] }}</td>
+                                <td>Dr/a {{ h['medico_apellido'] }}, {{ h['medico_nombre'] }}</td>
+                                <td>{{ h['fecha'] }}</td>
+                                <td>{{ h['hora'] }}</td>
+                                <td>
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('paciente_sacar_turno') }}"
+                                        onsubmit="return confirm('¿Confirmás que querés solicitar este turno?');">
 
-                {% if horarios_disponibles %}
+                                        <input type="hidden" name="id_horario" value="{{ h['id_horario'] }}">
 
-                    {% for h in horarios_disponibles %}
-
+                                        <button type="submit" class="btn-primary">
+                                            Solicitar turno
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
                         <tr>
-
-                            <td>{{ h['especialidad'] }}</td>
-
-                            <td>Dr/a {{ h['medico_apellido'] }}, {{ h['medico_nombre'] }}</td>
-
-                            <td>{{ h['fecha'] }}</td>
-
-                            <td>{{ h['hora'] }}</td>
-
-                            <td>
-                                <form
-                                    method="POST"
-                                    action="{{ url_for('paciente_sacar_turno') }}"
-                                    onsubmit="return confirm('¿Confirmás que querés solicitar el turno del {{ h['fecha'] }} a las {{ h['hora'] }} con Dr/a {{ h['medico_apellido'] }}?');">
-
-                                    <input type="hidden" name="id_horario" value="{{ h['id_horario'] }}">
-
-                                    <button type="submit" class="btn-primary">
-                                        Solicitar turno
-                                    </button>
-
-                                </form>
-                            </td>
-
-                        </tr>
-
-                    {% endfor %}
-
-                {% else %}
-
-                    <tr>
-
-                        <td colspan="5">
-
-                            <div class="empty-state">
-
-                                <div class="empty-icon">
-                                    🔍
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🔍</div>
+                                    <strong>No hay turnos disponibles.</strong>
+                                    <p>Probá cambiando los filtros o volvé a consultar más tarde.</p>
                                 </div>
-
-                                <strong>
-                                    No hay turnos disponibles.
-                                </strong>
-
-                                <p>
-                                    Probá cambiando los filtros
-                                    o volvé a consultar más tarde.
-                                </p>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                {% endif %}
-
+                            </td>
+                        </tr>
+                    {% endif %}
                 </tbody>
-
             </table>
-
         </section>
 
         <footer class="footer">
-            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos Grupo 8
         </footer>
 
     </main>

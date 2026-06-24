@@ -11,7 +11,7 @@
 
     <aside class="sidebar">
         <div class="sidebar-logo-box">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="TurnoMed">
+            <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
         <h2>TurnoMed</h2>
@@ -36,9 +36,7 @@
                 <p>Actualizá tus datos personales o cambiá tu contraseña.</p>
             </div>
 
-            <div class="date-pill">
-                👤 Perfil paciente
-            </div>
+            <div class="date-pill">👤 Perfil paciente</div>
         </header>
 
         {% with messages = get_flashed_messages() %}
@@ -50,29 +48,37 @@
         <section class="card">
             <div class="card-title">
                 <div class="icon-box">⚙</div>
-                <h2>Datos personales</h2>
+                <div>
+                    <h2>Datos personales</h2>
+                    <p class="table-description">
+                        Estos datos se usarán para la gestión de tus turnos.
+                    </p>
+                </div>
             </div>
 
             <form method="POST" action="/paciente/perfil">
 
-                <input type="text" name="nombre" value="{{ usuario.nombre }}" placeholder="Nombre" required>
+                <div class="form-grid">
+                    <input type="text" name="nombre" value="{{ usuario.nombre }}" placeholder="Nombre" required>
+                    <input type="text" name="apellido" value="{{ usuario.apellido }}" placeholder="Apellido" required>
+                </div>
 
-                <input type="text" name="apellido" value="{{ usuario.apellido }}" placeholder="Apellido" required>
+                <div class="form-grid">
+                    <input type="text" name="dni" value="{{ usuario.dni }}" placeholder="DNI">
+                    <input type="date" name="fecha_nacimiento" value="{{ usuario.fecha_nacimiento }}">
+                </div>
 
-                <input type="text" name="dni" value="{{ usuario.dni }}" placeholder="DNI">
-
-                <input type="text" name="telefono" value="{{ usuario.telefono }}" placeholder="Teléfono">
-
-                <input type="email" name="email" value="{{ usuario.email }}" placeholder="Correo electrónico" required>
+                <div class="form-grid">
+                    <input type="text" name="telefono" value="{{ usuario.telefono }}" placeholder="Teléfono">
+                    <input type="email" name="email" value="{{ usuario.email }}" placeholder="Correo electrónico" required>
+                </div>
 
                 <hr>
 
                 <h3>Cambiar contraseña</h3>
 
                 <input type="password" name="password_actual" placeholder="Contraseña actual">
-
                 <input type="password" name="nueva_password" placeholder="Nueva contraseña">
-
                 <input type="password" name="confirmar_password" placeholder="Confirmar nueva contraseña">
 
                 <button type="submit">
@@ -83,7 +89,7 @@
         </section>
 
         <footer class="footer">
-            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos
+            TurnoMed © 2026 - Sistema de Gestión de Turnos Médicos Grupo 8
         </footer>
 
     </main>
