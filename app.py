@@ -341,17 +341,32 @@ def obtener_medicos(busqueda=None, especialidad=None, estado="activos"):
     conn.close()
     return medicos
 
-def obtener_especialidades():
+def obtener_medicos_por_disponibilidad(especialidad=None, fecha=None):
     conn = get_conn()
-    especialidades = conn.execute("""
-        SELECT DISTINCT especialidad
-        FROM medicos
-        WHERE activo = 1
-        ORDER BY especialidad
-    """).fetchall()
-    conn.close()
-    return especialidades
 
+    query = """
+        SELECT DISTINCT medicos.*
+        FROM medicos
+        INNER JOIN horarios ON medicos.id_medico = horarios.id_medico
+        WHERE medicos.activo = 1
+        AND horarios.ocupado = 0
+    """
+
+    params = []
+
+    if especialidad:
+        query += " AND horarios.especialidad = ?"
+        params.append(especialidad)
+
+    if fecha:
+        query += " AND horarios.fecha = ?"
+        params.append(fecha)
+
+    query += " ORDER BY medicos.apellido, medicos.nombre"
+
+    medicos = conn.execute(query, params).fetchall()
+    conn.close()
+    return medicos
 
 def obtener_horarios_disponibles():
     conn = get_conn()
@@ -716,11 +731,22 @@ def admin():
 
     filtro_especialidad = request.args.get("especialidad", "")
     filtro_medico = request.args.get("id_medico", "")
+    filtro_fecha = request.args.get("fecha", "")
     busqueda_paciente = request.args.get("buscar_paciente", "")
+
+    medicos_filtrados = obtener_medicos(
+        especialidad=filtro_especialidad if filtro_especialidad else None
+    )
+
+    fechas_disponibles = obtener_fechas_disponibles(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_medico if filtro_medico else None
+    )
 
     horarios = obtener_horarios_filtrados(
         filtro_especialidad if filtro_especialidad else None,
-        filtro_medico if filtro_medico else None
+        filtro_medico if filtro_medico else None,
+        filtro_fecha if filtro_fecha else None
     )
 
     return render_template(
@@ -728,14 +754,15 @@ def admin():
         usuario=current_user,
         pacientes=obtener_pacientes(busqueda_paciente),
         busqueda_paciente=busqueda_paciente,
-        medicos=obtener_medicos(),
+        medicos=medicos_filtrados,
         especialidades=obtener_especialidades(),
+        fechas_disponibles=fechas_disponibles,
         horarios=horarios,
         turnos=obtener_turnos(),
         filtro_especialidad=filtro_especialidad,
-        filtro_medico=filtro_medico
+        filtro_medico=filtro_medico,
+        filtro_fecha=filtro_fecha
     )
-
 
 @app.route("/admin/agregar_medico", methods=["POST"])
 @login_required
@@ -981,6 +1008,16 @@ def cancelar_turno(id_turno):
     conn.close()
     return redirect(url_for("admin"))
 #panel paciente
+def obtener_especialidades():
+    conn = get_conn()
+    especialidades = conn.execute("""
+        SELECT DISTINCT especialidad
+        FROM medicos
+        WHERE activo = 1
+        ORDER BY especialidad
+    """).fetchall()
+    conn.close()
+    return especialidades
 
 @app.route("/paciente")
 @login_required
@@ -992,6 +1029,11 @@ def paciente():
     filtro_especialidad = request.args.get("especialidad", "")
     filtro_medico = request.args.get("id_medico", "")
     filtro_fecha = request.args.get("fecha", "")
+
+    medicos_filtrados = obtener_medicos_por_disponibilidad(
+        filtro_especialidad if filtro_especialidad else None,
+        filtro_fecha if filtro_fecha else None
+    )
 
     fechas_disponibles = obtener_fechas_disponibles(
         filtro_especialidad if filtro_especialidad else None,
@@ -1011,7 +1053,7 @@ def paciente():
         horarios_disponibles=horarios_disponibles,
         fechas_disponibles=fechas_disponibles,
         especialidades=obtener_especialidades(),
-        medicos=obtener_medicos(),
+        medicos=medicos_filtrados,
         filtro_especialidad=filtro_especialidad,
         filtro_medico=filtro_medico,
         filtro_fecha=filtro_fecha
@@ -1555,6 +1597,10 @@ def admin_agenda_disponible():
     filtro_medico = request.args.get("id_medico", "")
     filtro_fecha = request.args.get("fecha", "")
 
+    medicos_filtrados = obtener_medicos(
+        especialidad=filtro_especialidad if filtro_especialidad else None
+    )
+
     fechas_disponibles = obtener_fechas_disponibles(
         filtro_especialidad if filtro_especialidad else None,
         filtro_medico if filtro_medico else None
@@ -1570,7 +1616,7 @@ def admin_agenda_disponible():
         "agenda_disponible.html",
         horarios=horarios,
         fechas_disponibles=fechas_disponibles,
-        medicos=obtener_medicos(),
+        medicos=medicos_filtrados,
         especialidades=obtener_especialidades(),
         filtro_especialidad=filtro_especialidad,
         filtro_medico=filtro_medico,
