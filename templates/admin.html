@@ -146,6 +146,7 @@
             </div>
 
             <form method="GET" action="/admin#asignar-turno">
+
                 <div class="form-grid">
                     <input
                         type="text"
@@ -153,13 +154,46 @@
                         placeholder="Buscar paciente por nombre, apellido, DNI, email o teléfono"
                         value="{{ busqueda_paciente }}"
                     >
-                    <button type="submit">Buscar paciente</button>
+
+                    <select name="especialidad" onchange="this.form.submit()"> 
+                        <option value="">Todas las especialidades</option>
+                        {% for item in especialidades %}
+                            <option value="{{ item.especialidad }}"
+                                {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
+                                {{ item.especialidad }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
-                <a href="/admin#asignar-turno" class="btn-link">Limpiar búsqueda</a>
-            </form>
+                <div class="form-grid">
+                    <select name="id_medico" onchange="this.form.submit()">
+                        <option value="">Todos los médicos</option>
+                        {% for medico in medicos %}
+                            <option value="{{ medico.id_medico }}"
+                                {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
+                                Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
+                            </option>
+                        {% endfor %}
+                    </select>
 
-            <br>
+                    <select name="fecha" onchange="this.form.submit()">
+                        <option value="">Todas las fechas disponibles</option>
+                        {% for item in fechas_disponibles %}
+                            <option value="{{ item.fecha }}"
+                                {% if filtro_fecha == item.fecha %}selected{% endif %}>
+                                {{ item.fecha }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <button type="submit">Buscar paciente y filtrar turnos</button>
+                    <a href="/admin#asignar-turno" class="btn-link">Limpiar búsqueda</a>
+                </div>
+
+</form>
 
             <form method="POST" action="/asignar_turno">
                 <select name="id_paciente" required>

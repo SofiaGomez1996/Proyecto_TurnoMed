@@ -14,8 +14,6 @@
             <img src="{{ url_for('static', filename='imagenes/logo.png') }}" alt="TurnoMed">
         </div>
 
-        <h2>TurnoMed</h2>
-
         <nav class="menu">
             <a href="/admin">🏠 Panel</a>
             <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
@@ -53,7 +51,7 @@
                 <div>
                     <h2>Filtrar disponibilidad</h2>
                     <p class="table-description">
-                        El sistema muestra solo fechas con horarios libres según los filtros.
+                        Primero elegí una especialidad, luego un médico y finalmente una fecha.
                     </p>
                 </div>
             </div>
@@ -62,50 +60,59 @@
 
                 <div class="form-grid">
 
-                    <select name="especialidad">
-                        <option value="">Todas las especialidades</option>
+                    <div>
+                        <label>Especialidad</label>
+                        <select name="especialidad" onchange="this.form.submit()">
+                            <option value="">Todas las especialidades</option>
 
-                        {% for item in especialidades %}
-                            <option value="{{ item.especialidad }}"
-                                {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
-                                {{ item.especialidad }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                            {% for item in especialidades %}
+                                <option value="{{ item.especialidad }}"
+                                    {% if filtro_especialidad == item.especialidad %}selected{% endif %}>
+                                    {{ item.especialidad }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                    <select name="id_medico">
-                        <option value="">Todos los médicos</option>
+                    <div>
+                        <label>Médico</label>
+                        <select name="id_medico" onchange="this.form.submit()">
+                            <option value="">Todos los médicos</option>
 
-                        {% for medico in medicos %}
-                            <option value="{{ medico.id_medico }}"
-                                {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
-                                Dr/a {{ medico.apellido }}, {{ medico.nombre }} | {{ medico.especialidad }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                            {% for medico in medicos %}
+                                <option value="{{ medico.id_medico }}"
+                                    {% if filtro_medico == medico.id_medico|string %}selected{% endif %}>
+                                    Dr/a {{ medico.apellido }}, {{ medico.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
                 </div>
 
                 <div class="form-grid">
 
-                    <select name="fecha">
-                        <option value="">Todas las fechas disponibles</option>
+                    <div>
+                        <label>Fecha</label>
+                        <select name="fecha" onchange="this.form.submit()">
+                            <option value="">Todas las fechas disponibles</option>
 
-                        {% for item in fechas_disponibles %}
-                            <option value="{{ item.fecha }}"
-                                {% if filtro_fecha == item.fecha %}selected{% endif %}>
-                                {{ item.fecha }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                            {% for item in fechas_disponibles %}
+                                <option value="{{ item.fecha }}"
+                                    {% if filtro_fecha == item.fecha %}selected{% endif %}>
+                                    {{ item.fecha }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                    <button type="submit">Buscar horarios</button>
+                    <div style="display: flex; align-items: end;">
+                        <a href="/admin/agenda_disponible" class="btn-link">
+                            Limpiar filtros
+                        </a>
+                    </div>
 
                 </div>
-
-                <a href="/admin/agenda_disponible" class="btn-link">
-                    Limpiar filtros
-                </a>
 
             </form>
         </section>
