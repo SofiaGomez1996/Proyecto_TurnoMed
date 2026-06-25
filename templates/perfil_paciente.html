@@ -19,7 +19,10 @@
         <nav class="menu">
             <a href="/paciente">📋 Mis turnos</a>
             <a href="/paciente/perfil" class="active">⚙ Mi perfil</a>
-            <a href="/logout">↪ Cerrar sesión</a>
+            <a href="/logout"
+                onclick="return confirm('¿Está seguro de que desea cerrar la sesión?');">
+                ↪ Cerrar sesión
+            </a>
         </nav>
 
         <div class="sidebar-info">

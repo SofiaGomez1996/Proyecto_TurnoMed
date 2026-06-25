@@ -19,7 +19,10 @@
             <a href="/admin/medicos">👨‍⚕️ Administrar médicos</a>
             <a href="/admin/pacientes">👤 Administrar pacientes</a>
             <a href="/admin/agenda_disponible" class="active">🕒 Agenda disponible</a>
-            <a href="/logout">↪ Cerrar sesión</a>
+            <a href="/logout"
+                onclick="return confirm('¿Está seguro de que desea cerrar la sesión?');">
+                    ↪ Cerrar sesión
+            </a>
         </nav>
 
         <div class="sidebar-info">
