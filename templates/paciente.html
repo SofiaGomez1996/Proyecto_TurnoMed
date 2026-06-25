@@ -21,8 +21,11 @@
             <a href="/paciente" class="active">📋 Mis turnos</a>
             <a href="#solicitud">💬 Solicitar turno</a>
             <a href="/paciente/perfil">⚙ Mi perfil</a>
-            <a href="/logout">↪ Cerrar sesión</a>
-        </nav>
+            <a href="/logout"
+            onclick="return confirm('¿Está seguro de que desea cerrar la sesión?');">
+                ↪ Cerrar sesión
+            </a>
+            </nav>
 
         <div class="sidebar-info">
             <strong>Paciente</strong>

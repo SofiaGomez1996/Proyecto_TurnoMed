@@ -24,7 +24,10 @@
             <a href="/admin/agenda_disponible">🕒 Agenda disponible</a>
             <a href="#asignar-turno">👤 Asignar turno</a>
             <a href="#agenda">📋 Turnos asignados</a>
-            <a href="/logout">↪ Cerrar sesión</a>
+            <a href="/logout"
+                onclick="return confirm('¿Está seguro de que desea cerrar la sesión?');">
+                ↪ Cerrar sesión
+            </a>
         </nav>
 
         <div class="sidebar-info">
